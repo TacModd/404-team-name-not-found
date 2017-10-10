@@ -77,26 +77,9 @@ class DummyAgent(CaptureAgent):
     Your initialization code goes here, if you need any.
     '''
 
-  def tempChooseAction():
-    # get a list of actions
-    # get a list of values (call evaluate?)
-    # choose action with best value
-
-  def evaluate():
-    # get features
-    # get weights
-    # return features * weights
-
-  def getSuccessor():
-    #
-  
-  def FigureOutBehaviour():
-    # figure out behaviour
-      # 'start' behaviour until middle reached (stack ends?)
-      # defensive default (BOTH) once 'start' phase ends
-      # if enemy pacman eaten BOTH switch to offensive
-      # check value
-
+  def chooseBehaviour():
+    # check behaviourState value
+    
     # if offensive:
       # call OffensiveBehaviour()
     # elif defensive:
@@ -104,7 +87,34 @@ class DummyAgent(CaptureAgent):
     # else:
       # call StartBehaviour()
 
-  def StartBehaviour():
+  
+  def getSuccessor():
+    """
+    Finds the next successor which is a grid position (location tuple).
+    """
+    successor = gameState.generateSuccessor(self.index, action)
+    pos = successor.getAgentState(self.index).getPosition()
+    if pos != nearestPoint(pos):
+      # Only half a grid position was covered
+      return successor.generateSuccessor(self.index, action)
+    else:
+      return successor
+  
+  
+  def evaluate():
+    # get features
+    # get weights
+    # return features * weights
+    # separate evaluate for each behaviour? or pass extra argument?
+    
+  ###### 'START' BEHAVIOUR CODE ######
+  
+  def chooseStartAction():
+    # get a list of actions
+    # get a list of values (call evaluate?)
+      # start features/weights (defined in Top/Bottom class?)
+    # choose action with best value
+    
     # use greedyBFS to get to middle
       # one goes top, one goes bottom (see 'Top' and 'Bottom' classes)
 
@@ -114,24 +124,37 @@ class DummyAgent(CaptureAgent):
   def getStartWeights():
     #
     
-  def OffensiveBehaviour():
-    # call MonteCarlo algorithm to get final state scores
-    # call evaluate on returned list of final scores?
-    # return best score to chooseAction()?
+    
+  ###### 'OFFENCE' BEHAVIOUR CODE ######
+  
+  def chooseOffensiveAction():
+    # get a list of actions VIA MonteCarloSearch()
+    
+    # can return actions only and call evaluate here (more design consistent)
+    # OR can return actions and values (MonteCarlo design more flexible)
+    
+    # choose action with best value
 
   def MonteCarloSearch():
-    # random searches
-    # get offensive features/weights for each final state only (for now)
+    # random searches to get list of actions
+    # call evaluate on actions to get list of values
+      # get offensive features/weights for each final state only (for now)
+    # return actions, values (to chooseOffensiveAction)
 
   def getOffensiveFeatures():
     # distancetofood, foodeaten, numberfoodcarried, ghost?, capsule?
 
   def getOffensiveWeights():
     # what weights?
+    
+    
+  ###### 'DEFENCE' BEHAVIOUR CODE ######
 
-  def DefensiveBehaviour():
-    # get defensive features/weights
-    # return scores to chooseAction()
+  def chooseDefensiveAction():
+    # get a list of actions
+    # get a list of values (call evaluate?)
+      # evaluate defensive features/weights
+    # choose action with best value
 
   def getDefensiveFeatures():
     # enemyagent, enemyagentdistance, ghoststatus, distancetocentre
@@ -140,9 +163,9 @@ class DummyAgent(CaptureAgent):
   def getDefensiveWeights():
     # what weights?
 
-
-    
-
+#########################################################################33
+''' chooseAction function below can probs be deleted '''
+'''
   def chooseAction(self, gameState):
     """
     Picks among actions randomly.
@@ -154,10 +177,38 @@ class DummyAgent(CaptureAgent):
     '''
 
     return random.choice(actions)
+'''
 
 class Top(DummyAgent):
   # go top somehow
+  def getToCentre():
+    # pass
+  # unique start features/weights?
+    
+  # variable to store current behaviour
+  behaviourState = '???' # 0, 1 or 2?
+  
+  def FigureOutBehaviour():
+    # figure out behaviour
+      # 'start' behaviour until middle reached (stack ends?)
+      # defensive default (BOTH) once 'start' phase ends
+      # if enemy pacman eaten BOTH switch to offensive
+      # if offensive and carrying too much food, switch back to defensive/start
+      # change behaviourState to appropriate value
 
 class Bottom(DummyAgent):
   # go bottom somehow
+  def getToCentre():
+    # pass
+  # unique start features/weights?
+    
+  # variable to store current behaviour
+  behaviourState = '???' # 0, 1 or 2?
+  
+  def FigureOutBehaviour():
+    # figure out behaviour
+      # 'start' behaviour until middle reached (stack ends?)
+      # defensive default (BOTH) once 'start' phase ends
+      # if enemy pacman eaten BOTH switch to offensive
+      # change behaviourState to appropriate value
 
