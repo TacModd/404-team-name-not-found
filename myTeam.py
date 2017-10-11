@@ -120,7 +120,7 @@ class DummyAgent(CaptureAgent):
     weights = self.getStartWeights(gameState, action)
     return features * weights
 
-  def getStartFeatures():
+  def getStartFeatures(self, gameState, action):
     # distanceToCenter
     features = util.Counter()
     successor = self.getSuccessor(gameState, action)
@@ -133,7 +133,7 @@ class DummyAgent(CaptureAgent):
     features['distanceToCenter'] = minDistance
     return features
 
-  def getStartWeights():
+  def getStartWeights(self, gameState, action):
     #
     return {'distanceToCenter': -1}
     
