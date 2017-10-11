@@ -52,6 +52,9 @@ class DummyAgent(CaptureAgent):
   create an agent as this is the bare minimum.
   """
 
+  def __init__(self):
+    self.behaviourState = 'Start'
+
   def registerInitialState(self, gameState):
     """
     This method handles the initial setup of the
@@ -71,11 +74,52 @@ class DummyAgent(CaptureAgent):
     on initialization time, please take a look at
     CaptureAgent.registerInitialState in captureAgents.py.
     '''
+    int middle_x_pos = 
     CaptureAgent.registerInitialState(self, gameState)
 
     '''
     Your initialization code goes here, if you need any.
     '''
+'''
+  def nextBehaviourState(self):
+
+    if self.behaviourState == 'Start':
+      if self.middleReached(gameState, position):
+        self.behaviourState = 'Defence'
+
+    elif self.behaviourState == 'Defence':
+      if self.enemyIsDead(gameState, index):
+        self.behaviourState = 'Offence'
+
+    elif self.behaviourState == 'Offence':
+      if self.isDead(gameState, index):
+        self.resetFoodCount()
+        self.behaviourState == 'Start'
+      elif self.tooMuchFood(gameState, index):
+        self.behaviourState == 'Flee'
+
+    elif self.behaviourState == 'Flee':
+      if self.middleReached(gameState, position):
+        self.resetFoodCount()
+        self.behaviourState = 'Defence'
+      elif self.isDead(gameState, index):
+        self.resetFoodCount()
+        self.behaviourState = 'Start'
+
+
+    else:
+      print 'State not defined'
+
+'''
+
+
+    # figure out behaviour
+      # 'start' behaviour until middle reached (stack ends?)
+      # defensive default (BOTH) once 'start' phase ends
+      # if enemy pacman eaten BOTH switch to offensive
+      # change behaviourState to appropriate value
+
+      self.behaviourState = 'Defensive'
 
   def chooseBehaviour():
     # check behaviourState value
@@ -230,16 +274,6 @@ class Top(DummyAgent):
   def getStartWeights():
     return {'distanceToCentre': -1}
     
-  # variable to store current behaviour
-  behaviourState = '???' # 0, 1 or 2?
-  
-  def FigureOutBehaviour():
-    # figure out behaviour
-      # 'start' behaviour until middle reached (stack ends?)
-      # defensive default (BOTH) once 'start' phase ends
-      # if enemy pacman eaten BOTH switch to offensive
-      # if offensive and carrying too much food, switch back to defensive/start
-      # change behaviourState to appropriate value
 
 class Bottom(DummyAgent):
   # go bottom somehow
@@ -253,13 +287,6 @@ class Bottom(DummyAgent):
   def getStartWeights():
     return {'distanceToCentre': -1}
     
-  # variable to store current behaviour
-  behaviourState = '???' # 0, 1 or 2?
   
-  def FigureOutBehaviour():
-    # figure out behaviour
-      # 'start' behaviour until middle reached (stack ends?)
-      # defensive default (BOTH) once 'start' phase ends
-      # if enemy pacman eaten BOTH switch to offensive
-      # change behaviourState to appropriate value
+
 
