@@ -51,7 +51,8 @@ class DummyAgent(CaptureAgent):
   You should look at baselineTeam.py for more details about how to
   create an agent as this is the bare minimum.
   """
-
+  
+  ###### DON'T FORGET: THIS CAUSED CONFLICTS WITH THE HIGHER INIT ######
   def __init__(self):
     self.behaviourState = 'Start'
 
@@ -74,13 +75,15 @@ class DummyAgent(CaptureAgent):
     on initialization time, please take a look at
     CaptureAgent.registerInitialState in captureAgents.py.
     '''
-    int middle_x_pos = 
+    
     CaptureAgent.registerInitialState(self, gameState)
-
+    
     '''
     Your initialization code goes here, if you need any.
     '''
-'''
+    #### CALCULATE MIDDLEXPOS CONSTANT DURING INITIALIZATION? ####
+    
+
   def nextBehaviourState(self):
 
     if self.behaviourState == 'Start':
@@ -106,21 +109,10 @@ class DummyAgent(CaptureAgent):
         self.resetFoodCount()
         self.behaviourState = 'Start'
 
-
     else:
       print 'State not defined'
 
-'''
-
-
-    # figure out behaviour
-      # 'start' behaviour until middle reached (stack ends?)
-      # defensive default (BOTH) once 'start' phase ends
-      # if enemy pacman eaten BOTH switch to offensive
-      # change behaviourState to appropriate value
-
-      self.behaviourState = 'Defensive'
-
+  
   def chooseBehaviour():
     # check behaviourState value
     
@@ -130,6 +122,24 @@ class DummyAgent(CaptureAgent):
       # call DefensiveBehaviour()
     # else:
       # call StartBehaviour()
+      
+    #### PLACEHOLDER CHOICES ####
+    
+    if self.behaviourState == 'Start':
+      return self.chooseStartAction(gameState)
+
+    elif self.behaviourState == 'Defence':
+      return Directions.STOP
+
+    elif self.behaviourState == 'Offence':
+      return Directions.STOP
+
+    elif self.behaviourState == 'Flee':
+      return Directions.STOP
+
+    else:
+      print 'State not defined'
+      return Directions.STOP
 
   
   def getSuccessor(self, gameState, action):
@@ -143,24 +153,19 @@ class DummyAgent(CaptureAgent):
       return successor.generateSuccessor(self.index, action)
     else:
       return successor
-  
-  ''' probs devolve to separate functions '''
-  """
-  def evaluate():
-    # get features
-    # get weights
-    # return features * weights
-    # separate evaluate for each behaviour? or pass extra argument?
-  """
     
     
   ###### 'START' BEHAVIOUR CODE ######
   
   def chooseStartAction(self, gameState):
     # get a list of actions
+    actions = gameState.getLegalActions(self.index)
     # get a list of values (call evaluate?) OR call evaluateStart
       # start features/weights (defined in Top/Bottom class?)
+    values = [self.evaluateStart(gameState, a) for a in actions]
     # choose action with best value
+    maxValue = max(values)
+    bestActions = [a for a, v in zip(actions, values) if v == maxValue]
     
     # use greedyBFS to get to middle
       # one goes top, one goes bottom (see 'Top' and 'Bottom' classes)
@@ -172,10 +177,11 @@ class DummyAgent(CaptureAgent):
     return features * weights
 
   def getStartFeatures():
-    #
+    # distanceToCenter
 
   def getStartWeights():
-    #
+    # what weights?
+    return {'distanceToCenter': -1}
     
     
   ###### 'OFFENCE' BEHAVIOUR CODE ######
@@ -207,13 +213,13 @@ class DummyAgent(CaptureAgent):
     return features * weights
 
   def getOffensiveFeatures(self, gameState, action):
-    # distancetofood, foodeaten, numberfoodcarried, ghost?, capsule?
+    # distancetofood, foodremaining?, ghost?, capsule?/distancetocapsule?
     features = util.Counter()
     successor = self.getSuccessor(gameState, action)
     features['featureName'] = self.getFeatureInfo(successor)
 
   def getOffensiveWeights(self, gameState, action):
-    # what weights?
+    # what weights? check other implementations for a rough idea
     return {'featureName': weighting}
     
     
@@ -236,57 +242,62 @@ class DummyAgent(CaptureAgent):
     return features * weights
 
   def getDefensiveFeatures(self, gameState, action):
-    # enemyagent, enemyagentdistance, ghoststatus, distancetocentre
-    # tell it to hover somehow
+    # enemyagent, enemyagentdistance, scared? - maybe move to nextBehaviourState function, distancetocentre, reverse, STOP
+    # tell it to hover somehow using reverse/STOP
     features = util.Counter()
     successor = self.getSuccessor(gameState, action)
     features['featureName'] = self.getFeatureInfo(successor)
 
   def getDefensiveWeights(self, gameState, action):
-    # what weights?
+    # what weights? check other implementations for a rough idea
     return {'featureName': weighting}
+  
+  
+###### 'FLEE' BEHAVIOUR CODE ######
+
+def chooseFleeAction(self, gameState):
+  #
+
+def evaluateFlee(self, gameState, action):
+  #
+
+def getFleeFeatures(self, gameState, action):
+  # features are distancetocenter, nearbyghost?
+
+def getFleeWeights(self, gameState, action):
+  #
 
 #########################################################################33
-''' chooseAction function below can probs be deleted '''
-"""
-  def chooseAction(self, gameState):
-    '''
-    Picks among actions randomly.
-    '''
-    actions = gameState.getLegalActions(self.index)
 
-    '''
-    You should change this in your own agent.
-    '''
-
-    return random.choice(actions)
-"""
 
 class Top(DummyAgent):
   # go top somehow
-  def getToCentre():
-    # pass
-  # unique start features/weights?
+  def setCenter():
+    # copy paste what we wrote in myTeam.py
 
+  # these are the same for both and should be deleted (dummyagent handles these now)
+  '''
   def getStartFeatures():
     #
 
   def getStartWeights():
     return {'distanceToCentre': -1}
+  '''
     
 
 class Bottom(DummyAgent):
   # go bottom somehow
-  def getToCentre():
-    # pass
-  # unique start features/weights?
+  def setCenter():
+    # copy paste what we wrote in myTeam.py
 
+  # these are the same for both and should be deleted (dummyagent handles these now)
+  '''
   def getStartFeatures():
     #
 
   def getStartWeights():
     return {'distanceToCentre': -1}
-    
+  '''
   
 
 
