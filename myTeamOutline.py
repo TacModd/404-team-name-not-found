@@ -223,6 +223,12 @@ class Top(DummyAgent):
   def getToCentre():
     # pass
   # unique start features/weights?
+
+  def getStartFeatures():
+    #
+
+  def getStartWeights():
+    return {'distanceToCentre': -1}
     
   # variable to store current behaviour
   behaviourState = '???' # 0, 1 or 2?
@@ -240,6 +246,12 @@ class Bottom(DummyAgent):
   def getToCentre():
     # pass
   # unique start features/weights?
+
+  def getStartFeatures():
+    #
+
+  def getStartWeights():
+    return {'distanceToCentre': -1}
     
   # variable to store current behaviour
   behaviourState = '???' # 0, 1 or 2?
