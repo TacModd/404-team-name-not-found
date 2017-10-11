@@ -22,12 +22,9 @@ import game
 #################
 
 def createTeam(firstIndex, secondIndex, isRed,
-               first = 'DummyAgent', second = 'DummyAgent'):
+               first = 'Top', second = 'Bottom'):
   """
-  This function should return a list of two agents that will form the
-  team, initialized using firstIndex and secondIndex as their agent
-  index numbers.  isRed is True if the red team is being created, and
-  will be False if the blue team is being created.
+  This function should return a list of two agents that will form the team, initialized using firstIndex and secondIndex as their agent index numbers.  isRed is True if the red team is being created, and will be False if the blue team is being created.
 
   As a potentially helpful development aid, this function can take
   additional string-valued keyword arguments ("first" and "second" are
@@ -52,36 +49,162 @@ class DummyAgent(CaptureAgent):
   create an agent as this is the bare minimum.
   """
 
+  # def __init__(self):
+  #   self.behaviourState = 'Start'
+
   def registerInitialState(self, gameState):
-    """
-    This method handles the initial setup of the
-    agent to populate useful fields (such as what team
-    we're on).
 
-    A distanceCalculator instance caches the maze distances
-    between each pair of positions, so your agents can use:
-    self.distancer.getDistance(p1, p2)
-
-    IMPORTANT: This method may run for at most 15 seconds.
-    """
-
-    '''
-    Make sure you do not delete the following line. If you would like to
-    use Manhattan distances instead of maze distances in order to save
-    on initialization time, please take a look at
-    CaptureAgent.registerInitialState in captureAgents.py.
-    '''
     CaptureAgent.registerInitialState(self, gameState)
+    self.behaviourState = 'Start'
+    self.setCenter(gameState)
 
-    '''
-    Your initialization code goes here, if you need any.
-    '''
+  def chooseAction(self,gameState):
+    # check behaviourState value
+    
+    # if offensive:
+      # call OffensiveBehaviour()
+    # elif defensive:
+      # call DefensiveBehaviour()
+    # else:
+      # call StartBehaviour()
 
+    if self.behaviourState == 'Start':
+      return self.chooseStartAction(gameState)
 
+    elif self.behaviourState == 'Defence':
+      return Directions.STOP
+
+    elif self.behaviourState == 'Offence':
+      return Directions.STOP
+
+    elif self.behaviourState == 'Flee':
+      return Directions.STOP
+
+    else:
+      print 'State not defined'
+      return Directions.STOP
+
+  
+  def getSuccessor(self, gameState, action):
+    """
+    Finds the next successor which is a grid position (location tuple).
+    """
+    successor = gameState.generateSuccessor(self.index, action)
+    pos = successor.getAgentState(self.index).getPosition()
+    if pos != util.nearestPoint(pos):
+      # Only half a grid position was covered
+      return successor.generateSuccessor(self.index, action)
+    else:
+      return successor
+  
+  ''' probs devolve to separate functions '''
+  """
+  def evaluate():
+    # get features
+    # get weights
+    # return features * weights
+    # separate evaluate for each behaviour? or pass extra argument?
+  """
+    
+    
+  ###### 'START' BEHAVIOUR CODE ######
+  
+  def chooseStartAction(self, gameState):
+    # get a list of actions
+    # get a list of values (call evaluate?) OR call evaluateStart
+      # start features/weights (defined in Top/Bottom class?)
+    # choose action with best value
+    
+    # use greedyBFS to get to middle
+      # one goes top, one goes bottom (see 'Top' and 'Bottom' classes)
+    actions = gameState.getLegalActions(self.index)
+    minDistance = 9999999999
+    for action in actions:
+      successor = self.getSuccessor(gameState, action)
+      successorState = successor.getAgentState(self.index)
+      successorPos = successorState.getPosition()
+      if self.getMazeDistance(successorPos,self.center) < minDistance:
+          bestAction = action
+          minDistance = self.getMazeDistance(successorPos,self.center)
+    return bestAction
+      
+  def evaluateStart(self, gameState, action):
+    # same as base evaluate function really (see baselineTeam.py)
+    features = self.getStartFeatures(gameState, action)
+    weights = self.getStartWeights(gameState, action)
+    return features * weights
+
+    
+    
+  ###### 'OFFENCE' BEHAVIOUR CODE ######
+  
+  def chooseOffensiveAction(self, gameState):
+    # get a list of actions VIA MonteCarloSearch()
+    
+    # can return actions only and call evaluate here (more design consistent)
+    # actions = MonteCarloSearch(gameState)
+    # values = [self.evaluate(gameState, a) for a in actions]
+    
+    # OR can return actions and values (MonteCarlo design more flexible)
+    # actions, values = MonteCarloSearch(gameState)
+    
+    # choose action with best value
+    maxValue = max(values)
+    bestActions = [a for a, v in zip(actions, values) if v == maxValue]
+  
+  def evaluateOffensive(self, gameState, action):
+    # same as base evaluate function really (see baselineTeam.py)
+    features = self.getOffensiveFeatures(gameState, action)
+    weights = self.getOffensiveWeights(gameState, action)
+    return features * weights
+
+  def getOffensiveFeatures(self, gameState, action):
+    # distancetofood, foodeaten, numberfoodcarried, ghost?, capsule?
+    features = util.Counter()
+    successor = self.getSuccessor(gameState, action)
+    features['featureName'] = self.getFeatureInfo(successor)
+
+  def getOffensiveWeights(self, gameState, action):
+    # what weights?
+    return {'featureName': weighting}
+    
+    
+  ###### 'DEFENCE' BEHAVIOUR CODE ######
+
+  def chooseDefensiveAction(self, gameState):
+    # get a list of actions
+    actions = gameState.getLegalActions(self.index)
+    # get a list of values (call evaluate?) OR call evaluateDefensive
+      # evaluate defensive features/weights
+    values = [self.evaluate(gameState, a) for a in actions]
+    # choose action with best value
+    maxValue = max(values)
+    bestActions = [a for a, v in zip(actions, values) if v == maxValue]
+  
+  def evaluateDefensive(self, gameState, action):
+    # same as base evaluate function really (see baselineTeam.py)
+    features = self.getDefensiveFeatures(gameState, action)
+    weights = self.getDefensiveWeights(gameState, action)
+    return features * weights
+
+  def getDefensiveFeatures(self, gameState, action):
+    # enemyagent, enemyagentdistance, ghoststatus, distancetocentre
+    # tell it to hover somehow
+    features = util.Counter()
+    successor = self.getSuccessor(gameState, action)
+    features['featureName'] = self.getFeatureInfo(successor)
+
+  def getDefensiveWeights(self, gameState, action):
+    # what weights?
+    return {'featureName': weighting}
+
+#########################################################################33
+''' chooseAction function below can probs be deleted '''
+"""
   def chooseAction(self, gameState):
-    """
+    '''
     Picks among actions randomly.
-    """
+    '''
     actions = gameState.getLegalActions(self.index)
 
     '''
@@ -89,4 +212,63 @@ class DummyAgent(CaptureAgent):
     '''
 
     return random.choice(actions)
+"""
+
+class Top(DummyAgent):
+  # go top somehow
+  def setCenter(self,gameState):
+    #get center of map and maxHeight
+    x = gameState.getWalls().width/2
+    y = gameState.getWalls().height/2
+    yMax = gameState.getWalls().height;
+
+    #Shift center to home territory, with offset 1 away from wall
+    offset = 1
+    if self.red:
+        x = x - (1+offset)
+    else:
+        x = x + offset
+    startPos = gameState.getInitialAgentPosition(self.index)
+    #Find the closest position y-coordinate given the x-coordinate
+    #minYPosition = min([self.getMazeDistance(startPos,(x,y)) for y in xrange(y,yMax-1)])
+    minDistance = 99999999999
+    for y in xrange(y,yMax):
+      if not gameState.hasWall(x,y):
+        if self.getMazeDistance(startPos,(x,y)) < minDistance:
+          minY = y
+          minDistance = self.getMazeDistance(startPos,(x,y))
+    self.center = (x,minY)
+    print self.center
+
+
+    
+
+class Bottom(DummyAgent):
+  # go bottom somehow
+  def setCenter(self,gameState):
+    #get center of map and maxHeight
+    x = gameState.getWalls().width/2
+    y = gameState.getWalls().height/2
+    yMax = gameState.getWalls().height;
+
+    #Shift center to home territory, with offset 1 away from wall
+    offset = 1
+    if self.red:
+        x = x - (1+offset)
+    else:
+        x = x + offset
+    startPos = gameState.getInitialAgentPosition(self.index)
+    #Find the closest position y-coordinate given the x-coordinate
+    #minYPosition = min([self.getMazeDistance(startPos,(x,y)) for y in xrange(1,y-1)])
+    minDistance = 99999999999
+    for y in xrange(1,y-1):
+      if not gameState.hasWall(x,y):
+        if self.getMazeDistance(startPos,(x,y)) < minDistance:
+          minY = y
+          minDistance = self.getMazeDistance(startPos,(x,y))
+    self.center = (x,minY)
+    print self.center
+    
+  
+
 
