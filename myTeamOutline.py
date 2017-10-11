@@ -88,7 +88,7 @@ class DummyAgent(CaptureAgent):
       # call StartBehaviour()
 
   
-  def getSuccessor():
+  def getSuccessor(self, gameState, action):
     """
     Finds the next successor which is a grid position (location tuple).
     """
@@ -100,23 +100,32 @@ class DummyAgent(CaptureAgent):
     else:
       return successor
   
-  
+  ''' probs devolve to separate functions '''
+  """
   def evaluate():
     # get features
     # get weights
     # return features * weights
     # separate evaluate for each behaviour? or pass extra argument?
+  """
+    
     
   ###### 'START' BEHAVIOUR CODE ######
   
-  def chooseStartAction():
+  def chooseStartAction(self, gameState):
     # get a list of actions
-    # get a list of values (call evaluate?)
+    # get a list of values (call evaluate?) OR call evaluateStart
       # start features/weights (defined in Top/Bottom class?)
     # choose action with best value
     
     # use greedyBFS to get to middle
       # one goes top, one goes bottom (see 'Top' and 'Bottom' classes)
+      
+  def evaluateStart(self, gameState, action):
+    # same as base evaluate function really (see baselineTeam.py)
+    features = self.getStartFeatures(gameState, action)
+    weights = self.getStartWeights(gameState, action)
+    return features * weights
 
   def getStartFeatures():
     #
@@ -127,49 +136,79 @@ class DummyAgent(CaptureAgent):
     
   ###### 'OFFENCE' BEHAVIOUR CODE ######
   
-  def chooseOffensiveAction():
+  def chooseOffensiveAction(self, gameState):
     # get a list of actions VIA MonteCarloSearch()
     
     # can return actions only and call evaluate here (more design consistent)
+    # actions = MonteCarloSearch(gameState)
+    # values = [self.evaluate(gameState, a) for a in actions]
+    
     # OR can return actions and values (MonteCarlo design more flexible)
+    # actions, values = MonteCarloSearch(gameState)
     
     # choose action with best value
+    maxValue = max(values)
+    bestActions = [a for a, v in zip(actions, values) if v == maxValue]
 
-  def MonteCarloSearch():
+  def MonteCarloSearch(self, gameState):
     # random searches to get list of actions
     # call evaluate on actions to get list of values
       # get offensive features/weights for each final state only (for now)
     # return actions, values (to chooseOffensiveAction)
+  
+  def evaluateOffensive(self, gameState, action):
+    # same as base evaluate function really (see baselineTeam.py)
+    features = self.getOffensiveFeatures(gameState, action)
+    weights = self.getOffensiveWeights(gameState, action)
+    return features * weights
 
-  def getOffensiveFeatures():
+  def getOffensiveFeatures(self, gameState, action):
     # distancetofood, foodeaten, numberfoodcarried, ghost?, capsule?
+    features = util.Counter()
+    successor = self.getSuccessor(gameState, action)
+    features['featureName'] = self.getFeatureInfo(successor)
 
-  def getOffensiveWeights():
+  def getOffensiveWeights(self, gameState, action):
     # what weights?
+    return {'featureName': weighting}
     
     
   ###### 'DEFENCE' BEHAVIOUR CODE ######
 
-  def chooseDefensiveAction():
+  def chooseDefensiveAction(self, gameState):
     # get a list of actions
-    # get a list of values (call evaluate?)
+    actions = gameState.getLegalActions(self.index)
+    # get a list of values (call evaluate?) OR call evaluateDefensive
       # evaluate defensive features/weights
+    values = [self.evaluate(gameState, a) for a in actions]
     # choose action with best value
+    maxValue = max(values)
+    bestActions = [a for a, v in zip(actions, values) if v == maxValue]
+  
+  def evaluateDefensive(self, gameState, action):
+    # same as base evaluate function really (see baselineTeam.py)
+    features = self.getDefensiveFeatures(gameState, action)
+    weights = self.getDefensiveWeights(gameState, action)
+    return features * weights
 
-  def getDefensiveFeatures():
+  def getDefensiveFeatures(self, gameState, action):
     # enemyagent, enemyagentdistance, ghoststatus, distancetocentre
     # tell it to hover somehow
+    features = util.Counter()
+    successor = self.getSuccessor(gameState, action)
+    features['featureName'] = self.getFeatureInfo(successor)
 
-  def getDefensiveWeights():
+  def getDefensiveWeights(self, gameState, action):
     # what weights?
+    return {'featureName': weighting}
 
 #########################################################################33
 ''' chooseAction function below can probs be deleted '''
-'''
+"""
   def chooseAction(self, gameState):
-    """
+    '''
     Picks among actions randomly.
-    """
+    '''
     actions = gameState.getLegalActions(self.index)
 
     '''
@@ -177,7 +216,7 @@ class DummyAgent(CaptureAgent):
     '''
 
     return random.choice(actions)
-'''
+"""
 
 class Top(DummyAgent):
   # go top somehow
