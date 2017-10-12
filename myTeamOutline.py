@@ -22,7 +22,7 @@ import game
 #################
 
 def createTeam(firstIndex, secondIndex, isRed,
-               first = 'DummyAgent', second = 'DummyAgent'):
+               first = 'Top', second = 'Bottom'):
   """
   This function should return a list of two agents that will form the
   team, initialized using firstIndex and secondIndex as their agent
@@ -51,10 +51,6 @@ class DummyAgent(CaptureAgent):
   You should look at baselineTeam.py for more details about how to
   create an agent as this is the bare minimum.
   """
-  
-  ###### DON'T FORGET: THIS CAUSED CONFLICTS WITH THE HIGHER INIT ######
-  def __init__(self):
-    self.behaviourState = 'Start'
 
   def registerInitialState(self, gameState):
     """
@@ -116,7 +112,7 @@ class DummyAgent(CaptureAgent):
       print 'State not defined'
 
   
-  def chooseBehaviour():
+  def chooseAction(self, gameState):
     # check behaviourState value
     
     # if offensive:
@@ -151,7 +147,7 @@ class DummyAgent(CaptureAgent):
     """
     successor = gameState.generateSuccessor(self.index, action)
     pos = successor.getAgentState(self.index).getPosition()
-    if pos != nearestPoint(pos):
+    if pos != util.nearestPoint(pos):
       # Only half a grid position was covered
       return successor.generateSuccessor(self.index, action)
     else:
@@ -219,6 +215,7 @@ class DummyAgent(CaptureAgent):
     # call evaluate on actions to get list of values
       # get offensive features/weights for each final state only (for now)
     # return actions, values (to chooseOffensiveAction)
+    return 
   
   def evaluateOffensive(self, gameState, action):
     # same as base evaluate function really (see baselineTeam.py)
@@ -270,22 +267,28 @@ class DummyAgent(CaptureAgent):
 ###### 'FLEE' BEHAVIOUR CODE ######
 
 def chooseFleeAction(self, gameState):
+  return
   #
 
 def evaluateFlee(self, gameState, action):
   #
+  return
 
 def getFleeFeatures(self, gameState, action):
   # features are distancetocenter, nearbyghost?
+  return
 
 def getFleeWeights(self, gameState, action):
   #
+  return
 
 #########################################################################33
 
 
 class Top(DummyAgent):
   # go top somehow
+
+
   def setCenter(self,gameState):
     # get center of map and maxHeight
     x = gameState.getWalls().width/2
