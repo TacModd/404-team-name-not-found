@@ -251,42 +251,97 @@ class DummyAgent(CaptureAgent):
     
   ###### 'OFFENCE' BEHAVIOUR CODE ######
   
-  def chooseOffensiveAction(self, gameState):
+ def chooseOffensiveAction(self, gameState):
     # get a list of actions VIA MonteCarloSearch()
     
     # can return actions only and call evaluate here (more design consistent)
+    # need to get a bunch of actions for multiple searches
     # actions = MonteCarloSearch(gameState)
     # values = [self.evaluate(gameState, a) for a in actions]
+    originalState = gameState
+    actions = gameState.getLegalActions(self.index)
+    actions.remove(Directions.STOP)
     
+    rev = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
+    if rev in actions and len(actions) > 1:
+      actions.remove(rev)
+    values = []
+    for a in actions:
+      successor = self.getSuccessor(gameState, a)
+      value = sum(self.MonteCarloSearch(6, successor, 72))
+      values.append(value)
+    
+
     # OR can return actions and values (MonteCarlo design more flexible)
-    # actions, values = MonteCarloSearch(gameState)
     
     # choose action with best value
     maxValue = max(values)
     bestActions = [a for a, v in zip(actions, values) if v == maxValue]
 
-  def MonteCarloSearch(self, gameState):
+    choice = random.choice(bestActions)
+    successor = self.getSuccessor(gameState, a)
+    foodList = self.getFood(gameState).asList()
+    successorFoodList = self.getFood(successor).asList()
+    if len(successorFoodList) < len(foodList):
+      self.tooMuchFood += 1
+    return choice
+    
+    
+
+  def MonteCarloSearch(self, depth, gameState, iterations):
     # random searches to get list of actions
+    searchState = None
     # call evaluate on actions to get list of values
       # get offensive features/weights for each final state only (for now)
     # return actions, values (to chooseOffensiveAction)
-    return 
+    endStates = []
+    while iterations > 0:
+
+      searchState = gameState.deepCopy()
+
+      while depth > 0:
+        actions = searchState.getLegalActions(self.index)
+        actions.remove(Directions.STOP)
+
+        rev = Directions.REVERSE[searchState.getAgentState(self.index).configuration.direction]
+        if rev in actions and len(actions) > 1:
+          actions.remove(rev)
+
+        a = random.choice(actions)
+        searchState = self.getSuccessor(searchState, a)
+
+        depth -= 1
+
+      endStates.append(searchState)
+      iterations -= 1
+      
+    return [self.evaluateOffensive(endState) for endState in endStates]
   
-  def evaluateOffensive(self, gameState, action):
+  def evaluateOffensive(self, gameState):
     # same as base evaluate function really (see baselineTeam.py)
-    features = self.getOffensiveFeatures(gameState, action)
-    weights = self.getOffensiveWeights(gameState, action)
+    features = self.getOffensiveFeatures(gameState)
+    weights = self.getOffensiveWeights(gameState)
     return features * weights
 
-  def getOffensiveFeatures(self, gameState, action):
+  def getOffensiveFeatures(self, gameState):
     # distancetofood, foodremaining?, ghost?, capsule?/distancetocapsule?
     features = util.Counter()
-    successor = self.getSuccessor(gameState, action)
-    features['featureName'] = self.getFeatureInfo(successor)
 
-  def getOffensiveWeights(self, gameState, action):
+    foodList = self.getFood(gameState).asList()
+    features['stateScore'] = -len(foodList)
+
+    myPos = gameState.getAgentState(self.index).getPosition()
+    betterFoodList = [f for f in foodList if self.getMazeDistance(myPos, f) <= 6]
+    sumDistance = 0
+    for food in foodList:
+      sumDistance += self.getMazeDistance(myPos, food)
+    features['sumDistanceToFood'] = sumDistance
+    
+    return features
+
+  def getOffensiveWeights(self, gameState):
     # what weights? check other implementations for a rough idea
-    return {'featureName': weighting}
+    return {'stateScore': 100, 'sumDistanceToFood': -3}
     
     
   ###### 'DEFENCE' BEHAVIOUR CODE ######
@@ -412,21 +467,39 @@ class DummyAgent(CaptureAgent):
   
 ###### 'FLEE' BEHAVIOUR CODE ######
 
-def chooseFleeAction(self, gameState):
-  return
-  #
+  def chooseFleeAction(self, gameState):
+    #
+    actions = gameState.getLegalActions(self.index)
+    
+    values = [self.evaluateFlee(gameState, a) for a in actions]
+    
+    maxValue = max(values)
+    bestActions = [a for a, v in zip(actions, values) if v == maxValue]
 
-def evaluateFlee(self, gameState, action):
-  #
-  return
+    return random.choice(bestActions)
 
-def getFleeFeatures(self, gameState, action):
-  # features are distancetocenter, nearbyghost?
-  return
+  def evaluateFlee(self, gameState, action):
+    #
+    features = self.getFleeFeatures(gameState, action)
+    weights = self.getFleeWeights(gameState, action)
+    return features * weights
 
-def getFleeWeights(self, gameState, action):
-  #
-  return
+  def getFleeFeatures(self, gameState, action):
+    # features are distancetocenter, nearbyghost?
+    features = util.Counter()
+    successor = self.getSuccessor(gameState, action)
+    successorState = successor.getAgentState(self.index)
+    successorPos = successorState.getPosition()
+    minDistance = 99999999
+    if self.getMazeDistance(successorPos,self.center) < minDistance:
+      #bestAction = action
+      minDistance = self.getMazeDistance(successorPos,self.center)
+    features['distanceToCenter'] = minDistance
+    return features
+
+  def getFleeWeights(self, gameState, action):
+    #
+    return {'distanceToCenter': -1}
 
 #########################################################################33
 
