@@ -78,6 +78,10 @@ class DummyAgent(CaptureAgent):
     self.behaviourState = 'Start'
     self.setCenter(gameState)
     self.tooMuchFood = 0
+    self.prevFoodState = self.getFoodYouAreDefending(gameState)
+    self.opponentIndices = self.getOpponents(gameState)
+    self.teamIndices = self.getTeam(gameState)
+    self.teammateIndex = self.teamIndices.remove(self.index)
     
 
   def nextBehaviourState(self):
@@ -85,19 +89,19 @@ class DummyAgent(CaptureAgent):
     if self.behaviourState == 'Start':
       if self.middleReached(gameState):
         self.behaviourState = 'Guard'
-      elif self.enemyDetected(gameState):
+      elif self.opponentDetected(gameState):
         self.behaviourState = 'Defence'
 
     if self.behaviourState == 'Guard':
       #enemyDetected needs to return only if its the closest ghost to enemy, 
       #and return false if distance of one player to enemyPosition is 0
-      if self.enemyDetected(gameState):
+      if self.opponentDetected(gameState):
         self.behaviourState = 'Defence'
 
     elif self.behaviourState == 'Defence':
-      if self.enemyIsDead(gameState, index):
+      if self.opponentIsDead(gameState, index):
         self.behaviourState = 'Offence'
-      elif not enemyDetected(gameState):
+      elif not opponentDetected(gameState):
         self.behaviourState = 'Guard'
 
     elif self.behaviourState == 'Offence':
@@ -270,7 +274,47 @@ class DummyAgent(CaptureAgent):
     # what weights? check other implementations for a rough idea
     return {'featureName': weighting}
 
-  def enemyDetected(self,gameState):
+  def foodEatenByOpponent(self, gameState):
+    foodEatenByOpponent = []
+    for x in range(gameState.getWalls().width):
+      for y in range(gameState.getWalls().height):
+        if self.prevFoodState[x][y] == True and self.getFoodYouAreDefending(gameState)[x][y] == False:
+          opponentEatenFood = ooponentEatenFood + [(x,y)]
+    self.prevFoodState = self.getFoodYouAreDefending(gameState)
+    return footEatenByOpponent
+
+  def getOpponentPositions(self, gameState):
+    opponentPositions = []
+    for index in self.opponentIndices:
+      if not gameState.getAgentPosition(index) == None:
+        opponentPositions = opponentPositions + [gameState.getAgentPosition(index)]
+    return opponentPositions
+
+  def closestTeammember(self, gameState, position):
+    minDistance = 99999
+    for index in self.teamIndices:
+      distance = self.getMazeDistance(gameState.getAgentPosition(index), position)
+      if distance < minDistance:
+        minDistance = distance
+        minIndex = index
+    return minIndex
+
+  
+  def opponentDetected(self,gameState):
+
+    if len(self.getOpponentPositions(gameState)) > 0:
+      None 
+
+
+    foodEatenByOpponent = self.opponentEatenFood(gameState)
+
+    if len(opponentEatenFood) > 0:
+      for position in opponentEatenFood:
+        None
+
+        # check if you are the nearest teammate
+        # update positions to chacee
+
     return
   
   

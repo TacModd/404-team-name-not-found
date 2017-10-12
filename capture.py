@@ -127,7 +127,7 @@ class GameState:
   def getAgentPosition(self, index):
     """
     Returns a location tuple if the agent with the given index is observable;
-    if the agent is unobservable, returns None.
+    if the agent is unobservable, returns None. 
     """
     agentState = self.data.agentStates[index]
     ret = agentState.getPosition()
