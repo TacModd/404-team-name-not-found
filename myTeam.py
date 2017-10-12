@@ -83,12 +83,22 @@ class DummyAgent(CaptureAgent):
   def nextBehaviourState(self):
 
     if self.behaviourState == 'Start':
-      if self.middleReached(gameState, position):
+      if self.middleReached(gameState):
+        self.behaviourState = 'Guard'
+      elif self.enemyDetected(gameState):
+        self.behaviourState = 'Defence'
+
+    if self.behaviourState == 'Guard':
+      #enemyDetected needs to return only if its the closest ghost to enemy, 
+      #and return false if distance of one player to enemyPosition is 0
+      if self.enemyDetected(gameState):
         self.behaviourState = 'Defence'
 
     elif self.behaviourState == 'Defence':
       if self.enemyIsDead(gameState, index):
         self.behaviourState = 'Offence'
+      elif not enemyDetected(gameState):
+        self.behaviourState = 'Guard'
 
     elif self.behaviourState == 'Offence':
       if self.isDead(gameState, index):
@@ -259,6 +269,9 @@ class DummyAgent(CaptureAgent):
   def getDefensiveWeights(self, gameState, action):
     # what weights? check other implementations for a rough idea
     return {'featureName': weighting}
+
+  def enemyDetected(self,gameState):
+    return
   
   
 ###### 'FLEE' BEHAVIOUR CODE ######
