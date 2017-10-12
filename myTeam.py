@@ -95,6 +95,9 @@ class DummyAgent(CaptureAgent):
   def updateDefenceDestination(self,gameState):
     if self.destinationReached(gameState,self.defenceDestination) == False and not self.opponentDetected(gameState) == None:
       self.defenceDestination = self.opponentDetected(gameState)
+    elif self.destinationReached(gameState,self.defenceDestination) == False and self.opponentDetected(gameState) == None and not self.defenceDestination == None:
+      if not self.inHomeTerritory(gameState,self.defenceDestination,-1):
+        self.defenceDestination = None
     elif self.destinationReached(gameState,self.defenceDestination) == True and self.opponentDetected(gameState) == self.defenceDestination:
       self.defenceDestination = None
     elif self.destinationReached(gameState,self.defenceDestination) == True and not self.opponentDetected(gameState) == self.defenceDestination:
@@ -102,8 +105,8 @@ class DummyAgent(CaptureAgent):
     elif self.destinationReached(gameState,self.defenceDestination) == True and not self.opponentDetected(gameState) == None:
       self.defenceDestination = None
     else:
-      return
-    
+      return 
+
 
   def nextBehaviourState(self,gameState):
     #defenceDestinationCandidate = self.opponentDetected(gameState)
@@ -287,10 +290,30 @@ class DummyAgent(CaptureAgent):
     
     
   ###### 'DEFENCE' BEHAVIOUR CODE ######
+  def inHomeTerritory(self,gameState,position,offset):
+    homeX = gameState.getWalls().width/2
+    if self.red:
+      homeX = homeX - (1+offset)
+    else:
+      homeX = homeX + offset
+    if self.red and position[0] >= homeX:
+      return False
+    elif not self.red and position[0] <= homeX:
+      return False
+    else:
+      return True
+
 
   def chooseDefensiveAction(self, gameState):
     # get a list of actions
     actions = gameState.getLegalActions(self.index)
+    actions.remove(Directions.STOP)
+    for action in actions:
+      successor = self.getSuccessor(gameState,action)
+      successorState = successor.getAgentState(self.index)
+      successorPos = successorState.getPosition()
+      if not self.inHomeTerritory(gameState,successorPos,-1):
+        actions.remove(action)
     # get a list of values (call evaluate?) OR call evaluateDefensive
       # evaluate defensive features/weights
     values = [self.evaluateDefensive(gameState, a) for a in actions]
