@@ -24,8 +24,10 @@ import game
 def createTeam(firstIndex, secondIndex, isRed,
                first = 'Top', second = 'Bottom'):
   """
-  This function should return a list of two agents that will form the team, initialized using firstIndex and secondIndex as their agent index numbers.  isRed is True if the red team is being created, and will be False if the blue team is being created.
-
+  This function should return a list of two agents that will form the
+  team, initialized using firstIndex and secondIndex as their agent
+  index numbers.  isRed is True if the red team is being created, and
+  will be False if the blue team is being created.
   As a potentially helpful development aid, this function can take
   additional string-valued keyword arguments ("first" and "second" are
   such arguments in the case of this function), which will come from
@@ -49,16 +51,65 @@ class DummyAgent(CaptureAgent):
   create an agent as this is the bare minimum.
   """
 
-  # def __init__(self):
-  #   self.behaviourState = 'Start'
-
   def registerInitialState(self, gameState):
+    """
+    This method handles the initial setup of the
+    agent to populate useful fields (such as what team
+    we're on).
+    A distanceCalculator instance caches the maze distances
+    between each pair of positions, so your agents can use:
+    self.distancer.getDistance(p1, p2)
+    IMPORTANT: This method may run for at most 15 seconds.
+    """
 
+    '''
+    Make sure you do not delete the following line. If you would like to
+    use Manhattan distances instead of maze distances in order to save
+    on initialization time, please take a look at
+    CaptureAgent.registerInitialState in captureAgents.py.
+    '''
+    
     CaptureAgent.registerInitialState(self, gameState)
+    
+    '''
+    Your initialization code goes here, if you need any.
+    '''
+    #### CALCULATE MIDDLEXPOS CONSTANT DURING INITIALIZATION? ####
     self.behaviourState = 'Start'
     self.setCenter(gameState)
+    self.tooMuchFood = 0
+    
 
-  def chooseAction(self,gameState):
+  def nextBehaviourState(self):
+
+    if self.behaviourState == 'Start':
+      if self.middleReached(gameState, position):
+        self.behaviourState = 'Defence'
+
+    elif self.behaviourState == 'Defence':
+      if self.enemyIsDead(gameState, index):
+        self.behaviourState = 'Offence'
+
+    elif self.behaviourState == 'Offence':
+      if self.isDead(gameState, index):
+        self.resetFoodCount()
+        self.behaviourState == 'Start'
+      elif self.tooMuchFood(gameState, index):
+        self.behaviourState == 'Flee'
+
+    elif self.behaviourState == 'Flee':
+      if self.middleReached(gameState, position):
+        self.resetFoodCount()
+        self.behaviourState = 'Defence'
+      elif self.isDead(gameState, index):
+        self.resetFoodCount()
+        self.behaviourState = 'Start'
+
+    else:
+      print 'State not defined'
+
+  
+  def chooseAction(self, gameState):
     # check behaviourState value
     
     # if offensive:
@@ -67,7 +118,9 @@ class DummyAgent(CaptureAgent):
       # call DefensiveBehaviour()
     # else:
       # call StartBehaviour()
-
+      
+    #### PLACEHOLDER CHOICES ####
+    
     if self.behaviourState == 'Start':
       return self.chooseStartAction(gameState)
 
@@ -96,7 +149,7 @@ class DummyAgent(CaptureAgent):
       return successor.generateSuccessor(self.index, action)
     else:
       return successor
-  
+    
     
   ###### 'START' BEHAVIOUR CODE ######
   
@@ -153,6 +206,13 @@ class DummyAgent(CaptureAgent):
     # choose action with best value
     maxValue = max(values)
     bestActions = [a for a, v in zip(actions, values) if v == maxValue]
+
+  def MonteCarloSearch(self, gameState):
+    # random searches to get list of actions
+    # call evaluate on actions to get list of values
+      # get offensive features/weights for each final state only (for now)
+    # return actions, values (to chooseOffensiveAction)
+    return 
   
   def evaluateOffensive(self, gameState, action):
     # same as base evaluate function really (see baselineTeam.py)
@@ -161,13 +221,13 @@ class DummyAgent(CaptureAgent):
     return features * weights
 
   def getOffensiveFeatures(self, gameState, action):
-    # distancetofood, foodeaten, numberfoodcarried, ghost?, capsule?
+    # distancetofood, foodremaining?, ghost?, capsule?/distancetocapsule?
     features = util.Counter()
     successor = self.getSuccessor(gameState, action)
     features['featureName'] = self.getFeatureInfo(successor)
 
   def getOffensiveWeights(self, gameState, action):
-    # what weights?
+    # what weights? check other implementations for a rough idea
     return {'featureName': weighting}
     
     
@@ -190,18 +250,36 @@ class DummyAgent(CaptureAgent):
     return features * weights
 
   def getDefensiveFeatures(self, gameState, action):
-    # enemyagent, enemyagentdistance, ghoststatus, distancetocentre
-    # tell it to hover somehow
+    # enemyagent, enemyagentdistance, scared? - maybe move to nextBehaviourState function, distancetocentre, reverse, STOP
+    # tell it to hover somehow using reverse/STOP
     features = util.Counter()
     successor = self.getSuccessor(gameState, action)
     features['featureName'] = self.getFeatureInfo(successor)
 
   def getDefensiveWeights(self, gameState, action):
-    # what weights?
+    # what weights? check other implementations for a rough idea
     return {'featureName': weighting}
+  
+  
+###### 'FLEE' BEHAVIOUR CODE ######
+
+def chooseFleeAction(self, gameState):
+  return
+  #
+
+def evaluateFlee(self, gameState, action):
+  #
+  return
+
+def getFleeFeatures(self, gameState, action):
+  # features are distancetocenter, nearbyghost?
+  return
+
+def getFleeWeights(self, gameState, action):
+  #
+  return
 
 #########################################################################33
-
 
 
 class Top(DummyAgent):
@@ -228,8 +306,8 @@ class Top(DummyAgent):
     self.center = (x,yCandidate)
     print self.center
 
-
     
+
 class Bottom(DummyAgent):
   # go bottom somehow
   def setCenter(self,gameState):
@@ -252,4 +330,6 @@ class Bottom(DummyAgent):
         break
     self.center = (x,yCandidate)
     print self.center
+
+  
 
