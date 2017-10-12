@@ -297,26 +297,46 @@ class DummyAgent(CaptureAgent):
       if distance < minDistance:
         minDistance = distance
         minIndex = index
-    return minIndex
+    return minIndex,minDistance
 
   
   def opponentDetected(self,gameState):
 
-    if len(self.getOpponentPositions(gameState)) > 0:
-      None 
+    opponentPositions = self.getOpponentPositions(gameState)
+
+    if len(opponentPositions) == 1:
+      for position in opponentPositions:
+        if self.closestTeammember(gameState, position)[0] == self.index:
+          return position
+
+    if len(self.getOpponentPositions(gameState)) == 2:
+      #position1, position2 = opponentPositions
+      minDistance = 99999999
+      for position in opponentPositions:
+        index,distance = closestTeammember(gameState,position)
+        if distance < minDistance:
+            minDistance = distance
+            minPosition = position
+            minIndex = index
+      if minIndex == self.index:
+        return minPosition
+      else:
+        return opponentPositions.remove(minPosition)
+      #return self.getOpponentPositions(gameState).remove(position1)
+
+
+
 
 
     foodEatenByOpponent = self.opponentEatenFood(gameState)
 
     if len(opponentEatenFood) > 0:
       for position in opponentEatenFood:
-        None
-
+        if self.closestTeammember(gameState, position) == self.index:
+          return position
         # check if you are the nearest teammate
         # update positions to chacee
-
-    return
-  
+    return None
   
 ###### 'FLEE' BEHAVIOUR CODE ######
 
