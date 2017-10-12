@@ -307,7 +307,7 @@ class Top(DummyAgent):
       if not  gameState.hasWall(x,yCandidate):
         break
     self.center = (x,yCandidate)
-print self.center
+    print self.center
 
     
 
@@ -332,7 +332,7 @@ class Bottom(DummyAgent):
       if not  gameState.hasWall(x,yCandidate):
         break
     self.center = (x,yCandidate)
-print self.center
+    print self.center
 
   
 
