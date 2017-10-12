@@ -82,6 +82,9 @@ class DummyAgent(CaptureAgent):
     Your initialization code goes here, if you need any.
     '''
     #### CALCULATE MIDDLEXPOS CONSTANT DURING INITIALIZATION? ####
+    self.behaviourState = 'Start'
+    self.setCenter(gameState)
+    self.tooMuchFood = 0
     
 
   def nextBehaviourState(self):
@@ -158,17 +161,18 @@ class DummyAgent(CaptureAgent):
   ###### 'START' BEHAVIOUR CODE ######
   
   def chooseStartAction(self, gameState):
-    # get a list of actions
+    # use greedyBFS to get to middle
+      # one goes top, one goes bottom (see 'Top' and 'Bottom' classes)
+    
     actions = gameState.getLegalActions(self.index)
-    # get a list of values (call evaluate?) OR call evaluateStart
-      # start features/weights (defined in Top/Bottom class?)
+    
     values = [self.evaluateStart(gameState, a) for a in actions]
-    # choose action with best value
+    
     maxValue = max(values)
     bestActions = [a for a, v in zip(actions, values) if v == maxValue]
     
-    # use greedyBFS to get to middle
-      # one goes top, one goes bottom (see 'Top' and 'Bottom' classes)
+    #return bestAction
+    return random.choice(bestActions)
       
   def evaluateStart(self, gameState, action):
     # same as base evaluate function really (see baselineTeam.py)
@@ -176,11 +180,21 @@ class DummyAgent(CaptureAgent):
     weights = self.getStartWeights(gameState, action)
     return features * weights
 
-  def getStartFeatures():
+  def getStartFeatures(self, gameState, action):
     # distanceToCenter
+    features = util.Counter()
+    successor = self.getSuccessor(gameState, action)
+    successorState = successor.getAgentState(self.index)
+    successorPos = successorState.getPosition()
+    minDistance = 99999999
+    if self.getMazeDistance(successorPos,self.center) < minDistance:
+      #bestAction = action
+      minDistance = self.getMazeDistance(successorPos,self.center)
+    features['distanceToCenter'] = minDistance
+    return features
 
-  def getStartWeights():
-    # what weights?
+  def getStartWeights(self, gameState, action):
+    #
     return {'distanceToCenter': -1}
     
     
@@ -272,32 +286,58 @@ def getFleeWeights(self, gameState, action):
 
 class Top(DummyAgent):
   # go top somehow
-  def setCenter():
-    # copy paste what we wrote in myTeam.py
+  def setCenter(self,gameState):
+    # get center of map and maxHeight
+    x = gameState.getWalls().width/2
+    y = gameState.getWalls().height/2
+    yMax = gameState.getWalls().height;
 
-  # these are the same for both and should be deleted (dummyagent handles these now)
-  '''
-  def getStartFeatures():
-    #
+    #Shift center to home territory, with offset 1 away from wall
+    offset = 1
+    if self.red:
+        x = x - (1+offset)
+    else:
+        x = x + offset
+    startPos = gameState.getInitialAgentPosition(self.index)
+    #Find the closest position y-coordinate given the x-coordinate
+    #minYPosition = min([self.getMazeDistance(startPos,(x,y)) for y in xrange(y,yMax-1)])
+    minDistance = 99999999
+    for y in xrange(y,yMax):
+      if not gameState.hasWall(x,y):
+        if self.getMazeDistance(startPos,(x,y)) < minDistance:
+          minY = y
+          minDistance = self.getMazeDistance(startPos,(x,y))
+    self.center = (x,minY)
+    print self.center
 
-  def getStartWeights():
-    return {'distanceToCentre': -1}
-  '''
     
 
 class Bottom(DummyAgent):
   # go bottom somehow
-  def setCenter():
-    # copy paste what we wrote in myTeam.py
+  def setCenter(self,gameState):
+    # get center of map and maxHeight
+    x = gameState.getWalls().width/2
+    y = gameState.getWalls().height/2
+    yMax = gameState.getWalls().height;
 
-  # these are the same for both and should be deleted (dummyagent handles these now)
-  '''
-  def getStartFeatures():
-    #
+    #Shift center to home territory, with offset 1 away from wall
+    offset = 1
+    if self.red:
+        x = x - (1+offset)
+    else:
+        x = x + offset
+    startPos = gameState.getInitialAgentPosition(self.index)
+    #Find the closest position y-coordinate given the x-coordinate
+    #minYPosition = min([self.getMazeDistance(startPos,(x,y)) for y in xrange(1,y-1)])
+    minDistance = 99999999
+    for y in xrange(1,y-1):
+      if not gameState.hasWall(x,y):
+        if self.getMazeDistance(startPos,(x,y)) < minDistance:
+          minY = y
+          minDistance = self.getMazeDistance(startPos,(x,y))
+    self.center = (x,minY)
+    print self.center
 
-  def getStartWeights():
-    return {'distanceToCentre': -1}
-  '''
   
 
 
