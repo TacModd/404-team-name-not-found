@@ -287,59 +287,52 @@ def getFleeWeights(self, gameState, action):
 
 class Top(DummyAgent):
   # go top somehow
-
-
   def setCenter(self,gameState):
-    # get center of map and maxHeight
-    x = gameState.getWalls().width/2
-    y = gameState.getWalls().height/2
-    yMax = gameState.getWalls().height;
+    #get center of map and maxHeight
 
-    #Shift center to home territory, with offset 1 away from wall
+    x = gameState.getWalls().width/2
     offset = 1
     if self.red:
-        x = x - (1+offset)
+      x = x - (1+offset)
     else:
-        x = x + offset
-    startPos = gameState.getInitialAgentPosition(self.index)
-    #Find the closest position y-coordinate given the x-coordinate
-    #minYPosition = min([self.getMazeDistance(startPos,(x,y)) for y in xrange(y,yMax-1)])
-    minDistance = 99999999
-    for y in xrange(y,yMax):
-      if not gameState.hasWall(x,y):
-        if self.getMazeDistance(startPos,(x,y)) < minDistance:
-          minY = y
-          minDistance = self.getMazeDistance(startPos,(x,y))
-    self.center = (x,minY)
-    print self.center
+      x = x + offset
+    y = gameState.getWalls().height/2
+    yMax = gameState.getWalls().height
+    yCenter = int(round(yMax/3*2))
+    for i in xrange(0,yMax):
+      yCandidate = yCenter+i
+      if not  gameState.hasWall(x,yCandidate):
+        break
+      yCandidate = yCenter-i
+      if not  gameState.hasWall(x,yCandidate):
+        break
+    self.center = (x,yCandidate)
+print self.center
 
     
 
 class Bottom(DummyAgent):
   # go bottom somehow
   def setCenter(self,gameState):
-    # get center of map and maxHeight
+    #get center of map and maxHeight
     x = gameState.getWalls().width/2
-    y = gameState.getWalls().height/2
-    yMax = gameState.getWalls().height;
-
-    #Shift center to home territory, with offset 1 away from wall
     offset = 1
     if self.red:
-        x = x - (1+offset)
+      x = x - (1+offset)
     else:
-        x = x + offset
-    startPos = gameState.getInitialAgentPosition(self.index)
-    #Find the closest position y-coordinate given the x-coordinate
-    #minYPosition = min([self.getMazeDistance(startPos,(x,y)) for y in xrange(1,y-1)])
-    minDistance = 99999999
-    for y in xrange(1,y-1):
-      if not gameState.hasWall(x,y):
-        if self.getMazeDistance(startPos,(x,y)) < minDistance:
-          minY = y
-          minDistance = self.getMazeDistance(startPos,(x,y))
-    self.center = (x,minY)
-    print self.center
+      x = x + offset
+    y = gameState.getWalls().height/2
+    yMax = gameState.getWalls().height
+    yCenter = int(round(yMax/3))
+    for i in xrange(0,yMax):
+      yCandidate = yCenter+i
+      if not  gameState.hasWall(x,yCandidate):
+        break
+      yCandidate = yCenter-i
+      if not  gameState.hasWall(x,yCandidate):
+        break
+    self.center = (x,yCandidate)
+print self.center
 
   
 
