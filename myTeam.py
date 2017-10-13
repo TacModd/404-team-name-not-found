@@ -181,7 +181,6 @@ class DummyAgent(CaptureAgent):
         return
 
     else:
-      print 'State not defined'
       self.behaviourState = 'Guard'
     
   
@@ -189,7 +188,6 @@ class DummyAgent(CaptureAgent):
     # check behaviourState value
 
     self.nextBehaviourState(gameState)
-    print self.behaviourState
     if self.behaviourState == 'Guard':
       return self.chooseGuardAction(gameState)
     elif self.behaviourState == 'Defence':
@@ -279,7 +277,6 @@ class DummyAgent(CaptureAgent):
       maxAll = max(maxVal,maxAll)
       values.append(value)
     if minAll == maxAll:
-      print 'random'
       minDistance = 999999999
       foodList = self.getFood(gameState).asList()
       for food in foodList:
@@ -377,7 +374,7 @@ class DummyAgent(CaptureAgent):
     features['sumDistanceToFood'] = sumDistance
 
     #Calculate Distance to nearest ghost
-    minDistance = 999999999999
+    minDistance = 999999
     opponentDict = self.getOpponentPositionsDict(gameState)
     for index in self.opponentIndices:
       if opponentDict[index] != None:
@@ -387,6 +384,7 @@ class DummyAgent(CaptureAgent):
         if distance < minDistance:
           minDistance = distance
     features['closestEnemy'] = 1/minDistance
+    
 
     return features
 
@@ -603,7 +601,6 @@ class Top(DummyAgent):
       if not  gameState.hasWall(x,yCandidate):
         break
     self.center = (x,yCandidate)
-    print self.center
 
   
 
@@ -628,4 +625,3 @@ class Bottom(DummyAgent):
       if not  gameState.hasWall(x,yCandidate):
         break
     self.center = (x,yCandidate)
-    print self.center
