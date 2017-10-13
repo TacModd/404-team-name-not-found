@@ -133,9 +133,6 @@ class enemyAgent(object):
                                 #if not self.grid[x+dx[i]][y+dy[i]] > 0.75:
                                 self.grid[x+dx[i]][y+dy[i]] = minimum
                             except Exception:
-                                print "terrible, terrible problem"
-                                print "Agent: {}, location: [{},{}], value: {}".format(self.id, x, y, self.grid[x][y])
-                                print "[x+dx,y+dy]: [{},{}], isWall: {}".format(x+dx[i], y+dy[i], walls.data[x+dx[i]][y+dy[i]])
                                 raise
                                 util.pause()
                         else:
@@ -367,8 +364,7 @@ class MultiAgentSearchAgent(CaptureAgent):
             distanceToClosestGhost=100
 
         if distanceToClosestGhost == 0:
-            ghostScore = -999
-            print "dist=0"        
+            ghostScore = -999  
         elif distanceToClosestGhost < 6:
             ghostScore = (1./distanceToClosestGhost)
         else:
@@ -469,7 +465,6 @@ class MultiAgentSearchAgent(CaptureAgent):
                 futuredist = self.getMazeDistance(Pos, enemy.getPosition())
                 currentdist = self.getMazeDistance(Pos, currentEnemy.getPosition())
                 if not futuredist == currentdist:
-                    print "PREPARE FOR MUNCHING!"
                     return 10
 
             if(enemy.isPacman and enemy.getPosition() != None):
@@ -537,9 +532,6 @@ class MultiAgentSearchAgent(CaptureAgent):
                 friendScore = 1/self.getMazeDistance(Pos, friendState.getPosition())
             else:
                 friendScore = 1
-                if a == 'Stop':
-                    print "Back to Work!"
-                    #return 0
         else:
             friendScore = 1
         return friendScore
@@ -559,7 +551,6 @@ class MultiAgentSearchAgent(CaptureAgent):
                 pillScore = 1./distanceToClosestPill
         else:
             pillScore = 0
-            print "here"
         return pillScore
         
 
@@ -727,11 +718,9 @@ class MultiAgentSearchAgent(CaptureAgent):
                         sizeofmove = util.manhattanDistance(gameState.getAgentState(self.index).getPosition(), self.previousLocation)
                         if not gameState.getAgentState(self.index).isPacman or gameState.getAgentState(emy.id).scaredTimer > 0:
                             if not abs(sizeofmove) >1:
-                                print "GET MUNCHED"
                                 emy.setGhostStart()
                                 emy.updateGridMotion(self, gameState) 
                             else:
-                                print "rip"
                                 emy.notTouchingAgent(self.playerId)
                 else:
                     emy.notTouchingAgent(self.playerId)  #otherwise everything is fine, carry on.
@@ -1069,6 +1058,5 @@ class FrenchCanadianAgent(MultiAgentSearchAgent):
                 
         #print self.historicalActions
         #minimax(self, gameState, agentIndex, depth)
-        print "waka"
 
         return movement
