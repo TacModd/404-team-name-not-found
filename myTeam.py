@@ -307,7 +307,7 @@ class DummyAgent(CaptureAgent):
     values = []
     for a in actions:
       successor = self.getSuccessor(gameState, a)
-      monValues = self.MonteCarloSearch(6, successor, 48)
+      monValues = self.MonteCarloSearch(8, successor, 32)
       value = sum(monValues)
       maxVal = max(monValues)
       minVal = min(monValues)
@@ -403,7 +403,7 @@ class DummyAgent(CaptureAgent):
     features['stateScore'] = -len(foodList)
 
     myPos = gameState.getAgentState(self.index).getPosition()
-    betterFoodList = [f for f in foodList if self.getMazeDistance(myPos, f) <= 8]
+    betterFoodList = [f for f in foodList if self.getMazeDistance(myPos, f) <= 12]
     sumFoods = 0
     sumDistance = 0
     for food in betterFoodList:
@@ -416,7 +416,7 @@ class DummyAgent(CaptureAgent):
 
   def getOffensiveWeights(self, gameState):
     # what weights? check other implementations for a rough idea
-    return {'stateScore': 80, 'numFoods': 8, 'sumDistanceToFood': -1, 'ghost': 18}
+    return {'stateScore': 80, 'numFoods': 12, 'sumDistanceToFood': -1, 'ghost': 18}
 
     
   ###### 'DEFENCE' BEHAVIOUR CODE ######
