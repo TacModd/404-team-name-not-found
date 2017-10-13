@@ -75,7 +75,7 @@ class DummyAgent(CaptureAgent):
     Your initialization code goes here, if you need any.
     '''
     #### CALCULATE MIDDLEXPOS CONSTANT DURING INITIALIZATION? ####
-    self.behaviourState = 'Start'
+    self.behaviourState = 'Guard'
     self.setCenter(gameState)
     self.eatenFood = 0
     self.prevFoodState = self.getFoodYouAreDefending(gameState)
@@ -136,22 +136,21 @@ class DummyAgent(CaptureAgent):
       return 
     '''
 
-  def opponentIsDead(self, gameState):
+  def killedOpponent(self, gameState,teamIndex):
 
-    '''
-    for position in self.opponentPrevPositions:
-      if gameState.getAgentPosition(self.index) == position and self.inHomeTerritory(gameState, gameState.getAgentPosition(self.index), -1):
-        return True
-    return False
-
-    '''
     for index in self.opponentIndices:
       if self.opponentPositions[index] == gameState.getInitialAgentPosition(index):
         return True
       elif not self.opponentPrevPositions[index] == None:
-        if self.opponentPositions[index] == None and util.manhattanDistance(gameState.getAgentPosition(self.index), self.opponentPrevPositions[index])<2:
+        if self.opponentPositions[index] == None and util.manhattanDistance(gameState.getAgentPosition(teamIndex), self.opponentPrevPositions[index])<2:
           return True
     return False
+
+  def opponentIsDead(self, gameState):
+    dead = False
+    for teamIndex in self.teamIndices:
+      dead = (dead or self.killedOpponent(gameState,index))
+    return dead
 
   def isDead(self, gameState):
     if gameState.getAgentPosition(self.index) == gameState.getInitialAgentPosition(self.index):
@@ -176,34 +175,26 @@ class DummyAgent(CaptureAgent):
     self.updateOpponentPositions(gameState)
     self.updateDefenceDestination(gameState)
 
-    if self.behaviourState == 'Start':
-      if self.destinationReached(gameState,self.center):
-        self.behaviourState = 'Guard'
-      elif not self.defenceDestination == None:
-        self.behaviourState = 'Defence'
-      else:
-        return
-
-    elif self.behaviourState == 'Guard':
+    if self.behaviourState == 'Guard':
       if not self.defenceDestination == None:
         self.behaviourState = 'Defence'
       else:
         return
-
     elif self.behaviourState == 'Defence':
-      if self.opponentIsDead(gameState):
+      if self.killedOpponent(gameState,self.index):
          self.behaviourState = 'Offence'
       elif self.defenceDestination == None:
-        self.behaviourState = 'Start'
+        self.behaviourState = 'Guard'
       else:
         return
 
     elif self.behaviourState == 'Offence':
       if self.isDead(gameState):
         self.resetFoodCount()
-        self.behaviourState = 'Start'
+        self.behaviourState = 'Guard'
       elif self.tooMuchFood():
         self.behaviourState = 'Flee'
+        self.setFleeDestination(gameState)
         return 
       else:
         return
@@ -212,7 +203,7 @@ class DummyAgent(CaptureAgent):
       #if self.middleReached(gameState, position):
       if self.inHomeTerritory(gameState, gameState.getAgentPosition(self.index),-1) or self.isDead(gameState):
         self.resetFoodCount()
-        self.behaviourState = 'Start'
+        self.behaviourState = 'Guard'
       else:
         return
 
@@ -229,15 +220,13 @@ class DummyAgent(CaptureAgent):
     # elif defensive:
       # call DefensiveBehaviour()
     # else:
-      # call StartBehaviour()
+      # call GuardBehaviour()
       
     #### PLACEHOLDER CHOICES ####
 
     self.nextBehaviourState(gameState)
     print self.behaviourState
-    if self.behaviourState == 'Start':
-      return self.chooseStartAction(gameState)
-    elif self.behaviourState == 'Guard':
+    if self.behaviourState == 'Guard':
       return self.chooseGuardAction(gameState)
     elif self.behaviourState == 'Defence':
       return self.chooseDefensiveAction(gameState)
@@ -267,15 +256,15 @@ class DummyAgent(CaptureAgent):
       return successor
     
     
-  ###### 'START' BEHAVIOUR CODE ######
+  ###### 'GUARD' BEHAVIOUR CODE ######
   
-  def chooseStartAction(self, gameState):
+  def chooseGuardAction(self, gameState):
     # use greedyBFS to get to middle
       # one goes top, one goes bottom (see 'Top' and 'Bottom' classes)
     
     actions = gameState.getLegalActions(self.index)
     
-    values = [self.evaluateStart(gameState, a) for a in actions]
+    values = [self.evaluateGuard(gameState, a) for a in actions]
     
     maxValue = max(values)
     bestActions = [a for a, v in zip(actions, values) if v == maxValue]
@@ -283,13 +272,13 @@ class DummyAgent(CaptureAgent):
     #return bestAction
     return random.choice(bestActions)
       
-  def evaluateStart(self, gameState, action):
+  def evaluateGuard(self, gameState, action):
     # same as base evaluate function really (see baselineTeam.py)
-    features = self.getStartFeatures(gameState, action)
-    weights = self.getStartWeights(gameState, action)
+    features = self.getGuardFeatures(gameState, action)
+    weights = self.getGuardWeights(gameState, action)
     return features * weights
 
-  def getStartFeatures(self, gameState, action):
+  def getGuardFeatures(self, gameState, action):
     # distanceToCenter
     features = util.Counter()
     successor = self.getSuccessor(gameState, action)
@@ -302,13 +291,10 @@ class DummyAgent(CaptureAgent):
     features['distanceToCenter'] = minDistance
     return features
 
-  def getStartWeights(self, gameState, action):
+  def getGuardWeights(self, gameState, action):
     #
     return {'distanceToCenter': -1}
 
-  ###### 'GUARD' BEHAVIOUR CODE ######
-  def chooseGuardAction(self, gameState):
-    return Directions.STOP
     
   ###### 'OFFENCE' BEHAVIOUR CODE ######
   
@@ -537,6 +523,23 @@ class DummyAgent(CaptureAgent):
   
 ###### 'FLEE' BEHAVIOUR CODE ######
 
+  def setFleeDestination(self,gameState):
+    x = gameState.getWalls().width/2
+    offset = 0
+    if self.red:
+      x = x - (1+offset)
+    else:
+      x = x + offset
+    minDistance = 9999999
+    yMax = gameState.getWalls().height
+    for y in xrange(1,yMax):
+      if not  gameState.hasWall(x,y):
+        distance = self.getMazeDistance(gameState.getAgentPosition(self.index),(x,y))
+        if distance < minDistance:
+          minDistance = distance
+          minY = y
+    self.fleeDestination = (x,minY)
+
   def chooseFleeAction(self, gameState):
     #
     actions = gameState.getLegalActions(self.index)
@@ -563,7 +566,7 @@ class DummyAgent(CaptureAgent):
     minDistance = 99999999
     if self.getMazeDistance(successorPos,self.center) < minDistance:
       #bestAction = action
-      minDistance = self.getMazeDistance(successorPos,self.center)
+      minDistance = self.getMazeDistance(successorPos,self.fleeDestination)
     features['distanceToCenter'] = minDistance
     return features
 
