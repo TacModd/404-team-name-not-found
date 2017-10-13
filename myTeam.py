@@ -158,7 +158,7 @@ class DummyAgent(CaptureAgent):
     return False
 
   def tooMuchFood(self):
-    if self.eatenFood > 0:
+    if self.eatenFood > 2:
       return True
     return False
 
@@ -298,28 +298,16 @@ class DummyAgent(CaptureAgent):
     
   ###### 'OFFENCE' BEHAVIOUR CODE ######
   
-  def chooseOffensiveAction(self, gameState):
-    # get a list of actions VIA MonteCarloSearch()
-    
-    # can return actions only and call evaluate here (more design consistent)
-    # need to get a bunch of actions for multiple searches
-    # actions = MonteCarloSearch(gameState)
-    # values = [self.evaluate(gameState, a) for a in actions]
-    originalState = gameState
+def chooseOffensiveAction(self, gameState):
+    # get a list of actions for MonteCarloSearch()
     actions = gameState.getLegalActions(self.index)
     actions.remove(Directions.STOP)
     
-    rev = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
-    if rev in actions and len(actions) > 1:
-      actions.remove(rev)
     values = []
     for a in actions:
       successor = self.getSuccessor(gameState, a)
-      value = sum(self.MonteCarloSearch(6, successor, 72))
+      value = sum(self.MonteCarloSearch(6, successor, 48))
       values.append(value)
-    
-
-    # OR can return actions and values (MonteCarlo design more flexible)
     
     # choose action with best value
     maxValue = max(values)
@@ -330,39 +318,52 @@ class DummyAgent(CaptureAgent):
     foodList = self.getFood(gameState).asList()
     successorFoodList = self.getFood(successor).asList()
     if len(successorFoodList) < len(foodList):
-      print 'eat food'
       self.eatenFood += 1
     return choice
     
     
 
   def MonteCarloSearch(self, depth, gameState, iterations):
-    # random searches to get list of actions
+    # define a gameState that we will iteratively search through
     searchState = None
-    # call evaluate on actions to get list of values
-      # get offensive features/weights for each final state only (for now)
-    # return actions, values (to chooseOffensiveAction)
+
+    # get the distance to the nearest food
+    foodList = self.getFood(gameState).asList()
+    if len(foodList) > 0:
+      minDistance = min([self.getMazeDistance(gameState.getAgentState(self.index).getPosition(), food)
+                         for food in foodList])
+
+    # keep track of discovered endstates
     endStates = []
+    # do random searches for the number of iterations defined
     while iterations > 0:
 
+      
       searchState = gameState.deepCopy()
 
-      while depth > 0:
-        actions = searchState.getLegalActions(self.index)
-        actions.remove(Directions.STOP)
+      # if minDistance = 0, we want the action that called MonteCarlo
+      if minDistance == 0:
+        endStates.append(gameState)
+      # otherwise commit to random searches for depth specified
+      else:
+        while depth > 0:
+          actions = searchState.getLegalActions(self.index)
+          # stopping is a waste of time
+          actions.remove(Directions.STOP)
 
-        rev = Directions.REVERSE[searchState.getAgentState(self.index).configuration.direction]
-        if rev in actions and len(actions) > 1:
-          actions.remove(rev)
+          # reversing direction is also a waste of time
+          rev = Directions.REVERSE[searchState.getAgentState(self.index).configuration.direction]
+          if rev in actions and len(actions) > 1:
+            actions.remove(rev)
 
-        a = random.choice(actions)
-        searchState = self.getSuccessor(searchState, a)
+          a = random.choice(actions)
+          searchState = self.getSuccessor(searchState, a)
 
-        depth -= 1
-
-      endStates.append(searchState)
+          depth -= 1
+        endStates.append(searchState)
+        
       iterations -= 1
-      
+    # return values (to chooseOffensiveAction)
     return [self.evaluateOffensive(endState) for endState in endStates]
   
   def evaluateOffensive(self, gameState):
@@ -370,7 +371,7 @@ class DummyAgent(CaptureAgent):
     features = self.getOffensiveFeatures(gameState)
     weights = self.getOffensiveWeights(gameState)
     return features * weights
-
+  
   def getOffensiveFeatures(self, gameState):
     # distancetofood, foodremaining?, ghost?, capsule?/distancetocapsule?
     features = util.Counter()
@@ -379,18 +380,21 @@ class DummyAgent(CaptureAgent):
     features['stateScore'] = -len(foodList)
 
     myPos = gameState.getAgentState(self.index).getPosition()
-    betterFoodList = [f for f in foodList if self.getMazeDistance(myPos, f) <= 6]
+    betterFoodList = [f for f in foodList if self.getMazeDistance(myPos, f) <= 8]
+    sumFoods = 0
     sumDistance = 0
-    for food in foodList:
+    for food in betterFoodList:
+      sumFoods += 1
       sumDistance += self.getMazeDistance(myPos, food)
+    features['numFoods'] = sumFoods
     features['sumDistanceToFood'] = sumDistance
-    
+
     return features
 
   def getOffensiveWeights(self, gameState):
     # what weights? check other implementations for a rough idea
-    return {'stateScore': 100, 'sumDistanceToFood': -3}
-    
+    return {'stateScore': 80, 'numFoods': 8, 'sumDistanceToFood': -1, 'ghost': 18}
+ 
     
   ###### 'DEFENCE' BEHAVIOUR CODE ######
   def inHomeTerritory(self,gameState,position,offset):
