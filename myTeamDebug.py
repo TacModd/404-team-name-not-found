@@ -172,6 +172,8 @@ class DummyAgent(CaptureAgent):
 
   def nextBehaviourState(self,gameState):
     #defenceDestinationCandidate = self.opponentDetected(gameState)
+    print ''
+    print self.index
 
     self.updateOpponentPositions(gameState)
     self.updateDefenceDestination(gameState)
@@ -219,6 +221,9 @@ class DummyAgent(CaptureAgent):
     else:
       print 'State not defined'
       self.behaviourState = 'Guard'
+
+    print self.behaviourState
+
     
   
   def chooseAction(self, gameState):
@@ -498,6 +503,7 @@ class DummyAgent(CaptureAgent):
 
   def closestTeammember(self, gameState, position):
     minDistance = 99999
+    self.teamIndices.sort()
     for index in self.teamIndices:
       distance = self.getMazeDistance(gameState.getAgentPosition(index), position)
       if distance < minDistance:
@@ -514,25 +520,37 @@ class DummyAgent(CaptureAgent):
     if len(opponentPositions)<2 and len(foodEatenByOpponent)>0:
       for opEatFood in foodEatenByOpponent:
         for opponentPosition in opponentPositions:
-          if self.getMazeDistance(opEatFood,opponentPosition) > 0:
+          if self.getMazeDistance(opEatFood,opponentPosition) > 1:
             opponentPositions = opponentPositions + [opEatFood]
+
+    print 'opponentPositions', opponentPositions
 
     if len(opponentPositions) == 1:
       for position in opponentPositions:
         if self.closestTeammember(gameState, position)[0] == self.index:
+          print '1 opponentDetected', position
           return position
-    elif len(self.getOpponentPositionsList(gameState)) == 2:
+    elif len(opponentPositions) > 1:
       minDistance = 99999999
       for position in opponentPositions:
-        index,distance = self.closestTeammember(gameState,position)
+        #print 'pos in opponentPos', position
+        index, distance = self.closestTeammember(gameState,position)
+        #print 'dist, pos, index', distance, position, index
         if distance < minDistance:
             minDistance = distance
             minPosition = position
             minIndex = index
+      #print 'MIN dis, pos, index', minDistance, minPosition, minIndex
       if minIndex == self.index:
+        print '2 opponentDetected', minPosition
         return minPosition
       else:
-        return opponentPositions.remove(minPosition)
+        #print 'opponentPos', opponentPositions
+        for positions in opponentPositions:
+          #print 'pos, minPos', position, minPosition
+          if not position == minPosition:
+            print '3 opponentDetected', position
+            return position
     return None
   
 ###### 'FLEE' BEHAVIOUR CODE ######
