@@ -132,7 +132,6 @@ class DummyAgent(CaptureAgent):
     minDistance = 99999999
     minTeamIndex = None
     if self.opponentIsDead(gameState):
-      print 'blah'
       for opponentIndex in self.opponentIndices:
         opponentPosition = gameState.getAgentPosition(opponentIndex)
         if opponentPosition != None:
@@ -304,8 +303,7 @@ class DummyAgent(CaptureAgent):
       minAll = min(minVal,minAll)
       maxAll = max(maxVal,maxAll)
       values.append(value)
-    if minAll == maxAll:
-      print 'check'
+    if not self.FoodInProximity(gameState):
       minDistance = 999999999
       foodList = self.getFood(gameState).asList()
       for food in foodList:
@@ -334,7 +332,16 @@ class DummyAgent(CaptureAgent):
         self.eatenFood += 1
       return choice
     
-    
+  def FoodInProximity(self,gameState):
+    foodList = self.getFood(gameState).asList()
+    if len(foodList) > 0:
+      minDistance = min([self.getMazeDistance(gameState.getAgentState(self.index).getPosition(), food)
+                         for food in foodList])
+      if minDistance>15:
+        return False
+    else:
+      return True
+
 
   def MonteCarloSearch(self, depth, gameState, iterations):
     # define a gameState that we will iteratively search through
@@ -417,13 +424,21 @@ class DummyAgent(CaptureAgent):
         if distance < minDistance:
           minDistance = distance
     features['closestEnemy'] = float(1)/minDistance
+
+    capsules = self.getCapsules(gameState)
+    minDistance = 9999999
+    for capsule in capsules:
+      distance =self.getMazeDistance(gameState.getAgentPosition(self.index), capsule)
+      if distance<minDistance:
+        distance = minDistance
+    features['closestCapsuleDistance'] = float(1)/minDistance
     
 
     return features
 
   def getOffensiveWeights(self, gameState):
     # what weights? check other implementations for a rough idea
-    return {'stateScore': 80, 'numFoods': 8, 'sumDistanceToFood': -1, 'closestEnemy': -100}
+    return {'stateScore': 80, 'numFoods': 8, 'sumDistanceToFood': -1, 'closestEnemy': -60, 'closestCapsuleDistance': 30}
 
     
   ###### 'DEFENCE' BEHAVIOUR CODE ######
