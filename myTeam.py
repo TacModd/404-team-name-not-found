@@ -231,7 +231,7 @@ class DummyAgent(CaptureAgent):
     # check behaviourState value
 
     self.nextBehaviourState(gameState)
-    print self.behaviourState
+    #print self.behaviourState
     if self.behaviourState == 'Guard':
       return self.chooseGuardAction(gameState)
     elif self.behaviourState == 'Defence':
@@ -244,7 +244,7 @@ class DummyAgent(CaptureAgent):
       return self.chooseFleeAction(gameState)
 
     else:
-      print 'State not defined'
+      #print 'State not defined'
       return Directions.STOP
     
 
@@ -584,12 +584,19 @@ class DummyAgent(CaptureAgent):
 
     opponentPositions = self.getOpponentPositionsList(gameState)
     foodEatenByOpponent = self.foodEatenByOpponent(gameState)
+    #print 'food:', foodEatenByOpponent
     if len(opponentPositions)<2 and len(foodEatenByOpponent)>0:
-      for opEatFood in foodEatenByOpponent:
-        for opponentPosition in opponentPositions:
-          if self.getMazeDistance(opEatFood,opponentPosition) > 1:
-            opponentPositions = opponentPositions + [opEatFood]
-
+      #print '1st if statement entered'
+      if len(opponentPositions) == 0:
+        opponentPositions = foodEatenByOpponent
+      else:
+        #print len(opponentPositions)
+        for opEatFood in foodEatenByOpponent:
+          for opponentPosition in opponentPositions:
+            if self.getMazeDistance(opEatFood,opponentPosition) > 1:
+              #print '2nd if statement entered'
+              opponentPositions = opponentPositions + [opEatFood]
+    #print 'positions:', opponentPositions
     if len(opponentPositions) == 1:
       for position in opponentPositions:
         if self.closestTeammember(gameState, position)[0] == self.index:
@@ -623,10 +630,10 @@ class DummyAgent(CaptureAgent):
       i = i+1
       state, route = q.pop()
       if self.nearestGhostDistance(state) <= 1 and state != gameState:
-        print i,'check 1'
+        #print i,'check 1'
         continue
       elif state.getAgentPosition(self.index) in visited:
-        print i,'check 2'
+        #print i,'check 2'
         continue
       elif self.inHomeTerritory(state,state.getAgentPosition(self.index),0):
         if len(route) == 0:
@@ -641,7 +648,7 @@ class DummyAgent(CaptureAgent):
         actions.remove(rev)
       for action in actions:
         q.push((self.getSuccessor(state,action),route+[action]))
-    print 'check'
+    #print 'check'
     return random.choice(gameState.getLegalActions(self.index))
 
 #########################################################################33
@@ -660,7 +667,7 @@ class Top(DummyAgent):
       x = x + offset
     y = gameState.getWalls().height/2
     yMax = gameState.getWalls().height
-    yCenter = int(round(yMax/3*2))
+    yCenter = int(round(yMax/4*3))
     for i in xrange(0,yMax):
       yCandidate = yCenter+i
       if not  gameState.hasWall(x,yCandidate):
@@ -684,7 +691,7 @@ class Bottom(DummyAgent):
       x = x + offset
     y = gameState.getWalls().height/2
     yMax = gameState.getWalls().height
-    yCenter = int(round(yMax/3))
+    yCenter = int(round(yMax/4))
     for i in xrange(0,yMax):
       yCandidate = yCenter+i
       if not  gameState.hasWall(x,yCandidate):
