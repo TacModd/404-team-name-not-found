@@ -174,7 +174,7 @@ class DummyAgent(CaptureAgent):
     self.opponentDetected = self.updateOpponentDetected(gameState)
     self.updateDefenceDestination(gameState)
 
-    print self.index, self.defenceDestination 
+    #print self.index, self.defenceDestination 
 
     if self.behaviourState == 'Guard':
       if not self.defenceDestination == None:
@@ -319,11 +319,8 @@ class DummyAgent(CaptureAgent):
       successor = self.getSuccessor(gameState, a)
       monValues = self.MonteCarloSearch(8, successor, 40)
       value = sum(monValues)
-      maxVal = max(monValues)
-      minVal = min(monValues)
-      minAll = min(minVal,minAll)
-      maxAll = max(maxVal,maxAll)
       values.append(value)
+    print max(values),min(values)
     if not self.FoodInProximity(gameState):
       minDistance = 999999999
       foodList = self.getFood(gameState).asList()
@@ -432,6 +429,7 @@ class DummyAgent(CaptureAgent):
     # same as base evaluate function really (see baselineTeam.py)
     features = self.getOffensiveFeatures(gameState)
     weights = self.getOffensiveWeights(gameState)
+    print features * weights
     return features * weights
   
   def getOffensiveFeatures(self, gameState):
@@ -467,6 +465,12 @@ class DummyAgent(CaptureAgent):
           minDistance = distance
     features['closestEnemy'] = float(1)/minDistance
 
+    minDistance = 999999
+    for index in self.teammateIndex:
+      distance = self.getMazeDistance(gameState.getAgentPosition(index),gameState.getAgentPosition(self.index))
+    features['teammateDistance'] = float(1)/minDistance
+
+
     capsules = self.getCapsules(gameState)
     minDistance = 9999999
     for capsule in capsules:
@@ -474,13 +478,15 @@ class DummyAgent(CaptureAgent):
       if distance<minDistance:
         distance = minDistance
     features['closestCapsuleDistance'] = float(1)/minDistance
+
+
     
 
     return features
 
   def getOffensiveWeights(self, gameState):
     # what weights? check other implementations for a rough idea
-    return {'stateScore': 80, 'numFoods': 8, 'sumDistanceToFood': -1, 'closestEnemy': -60, 'closestCapsuleDistance': 30}
+    return {'stateScore': 40, 'numFoods': 8, 'sumDistanceToFood': -1, 'closestEnemy': -100, 'teammateDistance':-100,'closestCapsuleDistance': 45}
 
     
   ###### 'DEFENCE' BEHAVIOUR CODE ######
@@ -588,9 +594,7 @@ class DummyAgent(CaptureAgent):
 
     opponentPositions = self.getOpponentPositionsList(gameState)
     foodEatenByOpponent = self.foodEatenByOpponent(gameState)
-    print 'food:', foodEatenByOpponent
     if len(opponentPositions)<2 and len(foodEatenByOpponent)>0:
-      print '1st if statement entered'
       if len(opponentPositions) == 0:
         opponentPositions = foodEatenByOpponent
       else:
@@ -598,13 +602,10 @@ class DummyAgent(CaptureAgent):
         for opEatFood in foodEatenByOpponent:
           for opponentPosition in opponentPositions:
             if self.getMazeDistance(opEatFood,opponentPosition) > 1:
-              print '2nd if statement entered'
               opponentPositions = opponentPositions + [opEatFood]
-    print 'positions:', opponentPositions
     if len(opponentPositions) == 1:
       for position in opponentPositions:
         if self.closestTeammember(gameState, position)[0] == self.index:
-          print 'opponentDetected', position
           return position
     elif len(opponentPositions) > 1:
       minDistance = 99999999
@@ -615,14 +616,11 @@ class DummyAgent(CaptureAgent):
             minPosition = position
             minIndex = index
       if minIndex == self.index:
-        print 'opponentDetected', minPosition
         return minPosition
       else:
         for position in opponentPositions:
           if not position == minPosition:
-            print 'opponentdetected: ', position
             return position
-    print 'opponentDetected: None'
     return None
 
   ###### 'FLEE' BEHAVIOUR CODE ######
