@@ -588,9 +588,7 @@ class DummyAgent(CaptureAgent):
 
     opponentPositions = self.getOpponentPositionsList(gameState)
     foodEatenByOpponent = self.foodEatenByOpponent(gameState)
-    print 'food:', foodEatenByOpponent
     if len(opponentPositions)<2 and len(foodEatenByOpponent)>0:
-      print '1st if statement entered'
       if len(opponentPositions) == 0:
         opponentPositions = foodEatenByOpponent
       else:
@@ -598,13 +596,10 @@ class DummyAgent(CaptureAgent):
         for opEatFood in foodEatenByOpponent:
           for opponentPosition in opponentPositions:
             if self.getMazeDistance(opEatFood,opponentPosition) > 1:
-              print '2nd if statement entered'
               opponentPositions = opponentPositions + [opEatFood]
-    print 'positions:', opponentPositions
     if len(opponentPositions) == 1:
       for position in opponentPositions:
         if self.closestTeammember(gameState, position)[0] == self.index:
-          print 'opponentDetected', position
           return position
     elif len(opponentPositions) > 1:
       minDistance = 99999999
@@ -615,14 +610,11 @@ class DummyAgent(CaptureAgent):
             minPosition = position
             minIndex = index
       if minIndex == self.index:
-        print 'opponentDetected', minPosition
         return minPosition
       else:
         for position in opponentPositions:
           if not position == minPosition:
-            print 'opponentdetected: ', position
             return position
-    print 'opponentDetected: None'
     return None
 
   ###### 'FLEE' BEHAVIOUR CODE ######
