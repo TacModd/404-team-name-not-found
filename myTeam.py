@@ -16,6 +16,8 @@ from captureAgents import CaptureAgent
 import random, time, util
 from game import Directions
 import game
+import util
+from util import Queue
 
 #################
 # Team creation #
@@ -132,7 +134,6 @@ class DummyAgent(CaptureAgent):
     minDistance = 99999999
     minTeamIndex = None
     if self.opponentIsDead(gameState):
-      print 'blah'
       for opponentIndex in self.opponentIndices:
         opponentPosition = gameState.getAgentPosition(opponentIndex)
         if opponentPosition != None:
@@ -143,7 +144,7 @@ class DummyAgent(CaptureAgent):
     else:
       return False
     if minTeamIndex == None:
-      return False
+      return self.index == min(self.teamIndices)
     elif(self.index) != minTeamIndex:
       return True
     else:
@@ -170,7 +171,7 @@ class DummyAgent(CaptureAgent):
     #defenceDestinationCandidate = self.opponentDetected(gameState)
     self.updateOpponentPositions(gameState)
     self.updateDefenceDestination(gameState)
-
+    print self.eatenFood
     if self.behaviourState == 'Guard':
       if not self.defenceDestination == None:
         self.behaviourState = 'Defence'
@@ -192,9 +193,9 @@ class DummyAgent(CaptureAgent):
         self.behaviourState = 'Guard'
       elif not self.defenceDestination == None and self.inHomeTerritory(gameState,gameState.getAgentPosition(self.index),0):
         self.behaviourState = 'Defence'
-      elif self.tooMuchFood():
+      elif self.tooMuchFood() or self.nearestGhostDistance(gameState) <= 2:
         self.behaviourState = 'Flee'
-        self.setFleeDestination(gameState)
+        #self.setFleeDestination(gameState)
         return 
       else:
         return
@@ -304,8 +305,7 @@ class DummyAgent(CaptureAgent):
       minAll = min(minVal,minAll)
       maxAll = max(maxVal,maxAll)
       values.append(value)
-    if minAll == maxAll:
-      print 'check'
+    if not self.FoodInProximity(gameState):
       minDistance = 999999999
       foodList = self.getFood(gameState).asList()
       for food in foodList:
@@ -320,6 +320,11 @@ class DummyAgent(CaptureAgent):
         if distance<minDistance:
           minDistance = distance
           minAction = action
+      successor = self.getSuccessor(gameState, minAction)
+      foodList = self.getFood(gameState).asList()
+      successorFoodList = self.getFood(successor).asList()
+      if len(successorFoodList) < len(foodList):
+        self.eatenFood += 1
       return minAction
     else:
     # choose action with best value
@@ -334,7 +339,16 @@ class DummyAgent(CaptureAgent):
         self.eatenFood += 1
       return choice
     
-    
+  def FoodInProximity(self,gameState):
+    foodList = self.getFood(gameState).asList()
+    if len(foodList) > 0:
+      minDistance = min([self.getMazeDistance(gameState.getAgentState(self.index).getPosition(), food)
+                         for food in foodList])
+      if minDistance>15:
+        return False
+    else:
+      return True
+
 
   def MonteCarloSearch(self, depth, gameState, iterations):
     # define a gameState that we will iteratively search through
@@ -385,6 +399,22 @@ class DummyAgent(CaptureAgent):
     weights = self.getOffensiveWeights(gameState)
     return features * weights
   
+  def nearestGhostDistance(self,gameState):
+    minDistance = 999999
+    opponentDict = self.getOpponentPositionsDict(gameState)
+    for index in self.opponentIndices:
+      if opponentDict[index] != None:
+        oppState = gameState.getAgentState(index)
+        distance = self.getMazeDistance(opponentDict[index],gameState.getAgentPosition(self.index))
+        
+        if gameState.getAgentState(index).scaredTimer > 0:
+          distance = distance*1000
+        if oppState.isPacman:
+          distance = distance*1000
+        if distance < minDistance:
+          minDistance = distance
+    return minDistance
+
   def getOffensiveFeatures(self, gameState):
     # distancetofood, foodremaining?, ghost?, capsule?/distancetocapsule?
     features = util.Counter()
@@ -403,27 +433,23 @@ class DummyAgent(CaptureAgent):
     features['sumDistanceToFood'] = sumDistance
 
     #Calculate Distance to nearest ghost
-    minDistance = 999999
-    opponentDict = self.getOpponentPositionsDict(gameState)
-    for index in self.opponentIndices:
-      if opponentDict[index] != None:
-        oppState = gameState.getAgentState(index)
-        distance = self.getMazeDistance(opponentDict[index],gameState.getAgentPosition(self.index))
-        
-        if gameState.getAgentState(index).scaredTimer > 0:
-          distance = distance*1000
-        if oppState.isPacman:
-          distance = distance*1000
-        if distance < minDistance:
-          minDistance = distance
+    minDistance = self.nearestGhostDistance(gameState)
     features['closestEnemy'] = float(1)/minDistance
+
+    capsules = self.getCapsules(gameState)
+    minDistance = 9999999
+    for capsule in capsules:
+      distance =self.getMazeDistance(gameState.getAgentPosition(self.index), capsule)
+      if distance<minDistance:
+        distance = minDistance
+    features['closestCapsuleDistance'] = float(1)/minDistance
     
 
     return features
 
   def getOffensiveWeights(self, gameState):
     # what weights? check other implementations for a rough idea
-    return {'stateScore': 80, 'numFoods': 8, 'sumDistanceToFood': -1, 'closestEnemy': -100}
+    return {'stateScore': 80, 'numFoods': 8, 'sumDistanceToFood': -1, 'closestEnemy': -60, 'closestCapsuleDistance': 30}
 
     
   ###### 'DEFENCE' BEHAVIOUR CODE ######
@@ -559,56 +585,87 @@ class DummyAgent(CaptureAgent):
 
   ###### 'FLEE' BEHAVIOUR CODE ######
 
-  def setFleeDestination(self,gameState):
-    x = gameState.getWalls().width/2
-    offset = 0
-    if self.red:
-      x = x - (1+offset)
-    else:
-      x = x + offset
-    minDistance = 9999999
-    yMax = gameState.getWalls().height
-    for y in xrange(1,yMax):
-      if not  gameState.hasWall(x,y):
-        distance = self.getMazeDistance(gameState.getAgentPosition(self.index),(x,y))
-        if distance < minDistance:
-          minDistance = distance
-          minY = y
-    self.fleeDestination = (x,minY)
+  # def setFleeDestination(self,gameState):
+  #   x = gameState.getWalls().width/2
+  #   offset = 0
+  #   if self.red:
+  #     x = x - (1+offset)
+  #   else:
+  #     x = x + offset
+  #   minDistance = 9999999
+  #   yMax = gameState.getWalls().height
+  #   for y in xrange(1,yMax):
+  #     if not  gameState.hasWall(x,y):
+  #       distance = self.getMazeDistance(gameState.getAgentPosition(self.index),(x,y))
+  #       if distance < minDistance:
+  #         minDistance = distance
+  #         minY = y
+  #   self.fleeDestination = (x,minY)
 
   def chooseFleeAction(self, gameState):
     #
-    actions = gameState.getLegalActions(self.index)
-    
-    values = [self.evaluateFlee(gameState, a) for a in actions]
-    
-    maxValue = max(values)
-    bestActions = [a for a, v in zip(actions, values) if v == maxValue]
+    q = Queue()
+    q.push((gameState, []))
+    visited = []
+    i = 0
+    while not q.isEmpty():
+      print i
+      i = i+1
+      state, route = q.pop()
+      if self.nearestGhostDistance(state) == 0:
+        print 'check 1'
+        continue
+      elif state.getAgentPosition(self.index) in visited:
+        print 'check 2'
+        continue
+      elif self.inHomeTerritory(state,state.getAgentPosition(self.index),0):
+        return route[0]
+      visited = visited + [state.getAgentPosition(self.index)]
+      actions = state.getLegalActions(self.index)
+      print actions
+      rev = Directions.REVERSE[state.getAgentState(self.index).configuration.direction]
+      if rev in actions and len(actions) > 1:
+        actions.remove(rev)
+      for action in actions:
+        q.push((self.getSuccessor(state,action),route+[action]))
+    print 'check'
+    return random.choice(gameState.getLegalActions(self.index))
 
-    return random.choice(bestActions)
 
-  def evaluateFlee(self, gameState, action):
-    #
-    features = self.getFleeFeatures(gameState, action)
-    weights = self.getFleeWeights(gameState, action)
-    return features * weights
+    # q.push((problem.getStartState(), []))
+    # while not q.isEmpty():
+    #     node,route = q.pop()
+    #     if problem.isGoalState(node):
+    #         return route
+    #     if node not in visited:
+    #         visited.append(node) 
+    #         for coord,move,cost in problem.getSuccessors(node):
+    #             q.push((coord,route + [move]))
+    # return []
+    # return random.choice(bestActions)
 
-  def getFleeFeatures(self, gameState, action):
-    # features are distancetocenter, nearbyghost?
-    features = util.Counter()
-    successor = self.getSuccessor(gameState, action)
-    successorState = successor.getAgentState(self.index)
-    successorPos = successorState.getPosition()
-    minDistance = 99999999
-    if self.getMazeDistance(successorPos,self.center) < minDistance:
-      #bestAction = action
-      minDistance = self.getMazeDistance(successorPos,self.fleeDestination)
-    features['distanceToCenter'] = minDistance
-    return features
+  # def evaluateFlee(self, gameState, action):
+  #   #
+  #   features = self.getFleeFeatures(gameState, action)
+  #   weights = self.getFleeWeights(gameState, action)
+  #   return features * weights
 
-  def getFleeWeights(self, gameState, action):
-    #
-    return {'distanceToCenter': -1}
+  # def getFleeFeatures(self, gameState, action):
+  #   # features are distancetocenter, nearbyghost?
+  #   features = util.Counter()
+  #   successor = self.getSuccessor(gameState, action)
+  #   successorState = successor.getAgentState(self.index)
+  #   successorPos = successorState.getPosition()
+  #   minDistance = 99999999
+  #   if self.getMazeDistance(successorPos,self.center) < minDistance:
+  #     #bestAction = action
+  #     minDistance = self.getMazeDistance(successorPos,self.fleeDestination)
+  #   features['distanceToCenter'] = minDistance
+  #   return features
+
+  # def getFleeWeights(self, gameState, action):
+  #   #
+  #   return {'distanceToCenter': -1}
 
 #########################################################################33
 
