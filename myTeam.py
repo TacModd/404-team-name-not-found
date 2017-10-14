@@ -87,6 +87,9 @@ class DummyAgent(CaptureAgent):
     self.attackDestination = None
     self.opponentPositions = {}
     self.opponentPrevPositions = {}
+    for opponentIndex in self.opponentIndices:
+      self.opponentPositions[opponentIndex] = None
+      self.opponentPrevPositions[opponentIndex] = None
   
   def destinationReached(self,gameState,destination):
     if destination == None:
@@ -104,26 +107,44 @@ class DummyAgent(CaptureAgent):
       else:
         if self.defenceDestination == None:
           return 
-        elif not self.inHomeTerritory(gameState,self.defenceDestination,-1):
+        elif not self.inHomeTerritory(gameState,self.defenceDestination,0):
           self.defenceDestination = None
         else: 
           return 
 
-  def killedOpponent(self, gameState,teamIndex):
+  def killedOpponent(self, gameState,index):
 
-    for index in self.opponentIndices:
-      if self.opponentPositions[index] == gameState.getInitialAgentPosition(index):
+    for opponentIndex in self.opponentIndices:
+      if self.opponentPositions[opponentIndex] == gameState.getInitialAgentPosition(opponentIndex):
         return True
-      elif not self.opponentPrevPositions[index] == None:
-        if self.opponentPositions[index] == None and util.manhattanDistance(gameState.getAgentPosition(teamIndex), self.opponentPrevPositions[index])<2:
+      elif not self.opponentPrevPositions[opponentIndex] == None:
+        if self.opponentPositions[opponentIndex] == None and util.manhattanDistance(gameState.getAgentPosition(index), self.opponentPrevPositions[opponentIndex])<2:
           return True
     return False
-
+    
   def opponentIsDead(self, gameState):
     dead = False
     for teamIndex in self.teamIndices:
-      dead = (dead or self.killedOpponent(gameState,index))
+      dead = (dead or self.killedOpponent(gameState,teamIndex))
     return dead
+
+  def shouldIAttack(self,gameState):
+    minDistance = 99999999
+    if self.opponentIsDead(gameState):
+      print 'blah'
+      for opponentIndex in self.opponentIndices:
+        opponentPosition = gameState.getAgentPosition(opponentIndex)
+        if opponentPosition != None:
+          teamIndex,distance = self.closestTeammember(gameState, opponentPosition)
+          if distance < minDistance:
+            minDistance = distance
+            minTeamIndex = teamIndex
+    else:
+      return False
+    if(self.index) != minTeamIndex:
+      return True
+    else:
+      return False
 
   def isDead(self, gameState):
     if gameState.getAgentPosition(self.index) == gameState.getInitialAgentPosition(self.index):
@@ -144,17 +165,18 @@ class DummyAgent(CaptureAgent):
 
   def nextBehaviourState(self,gameState):
     #defenceDestinationCandidate = self.opponentDetected(gameState)
-
     self.updateOpponentPositions(gameState)
     self.updateDefenceDestination(gameState)
 
     if self.behaviourState == 'Guard':
       if not self.defenceDestination == None:
         self.behaviourState = 'Defence'
+      elif self.shouldIAttack(gameState):
+         self.behaviourState = 'Offence'
       else:
         return
     elif self.behaviourState == 'Defence':
-      if self.killedOpponent(gameState,self.index):
+      if self.shouldIAttack(gameState):
          self.behaviourState = 'Offence'
       elif self.defenceDestination == None:
         self.behaviourState = 'Guard'
@@ -174,7 +196,7 @@ class DummyAgent(CaptureAgent):
 
     elif self.behaviourState == 'Flee':
       #if self.middleReached(gameState, position):
-      if self.inHomeTerritory(gameState, gameState.getAgentPosition(self.index),-1) or self.isDead(gameState):
+      if self.inHomeTerritory(gameState, gameState.getAgentPosition(self.index),0) or self.isDead(gameState):
         self.resetFoodCount()
         self.behaviourState = 'Guard'
       else:
@@ -188,6 +210,7 @@ class DummyAgent(CaptureAgent):
     # check behaviourState value
 
     self.nextBehaviourState(gameState)
+    print self.behaviourState
     if self.behaviourState == 'Guard':
       return self.chooseGuardAction(gameState)
     elif self.behaviourState == 'Defence':
@@ -378,19 +401,23 @@ class DummyAgent(CaptureAgent):
     opponentDict = self.getOpponentPositionsDict(gameState)
     for index in self.opponentIndices:
       if opponentDict[index] != None:
+        oppState = gameState.getAgentState(index)
         distance = self.getMazeDistance(opponentDict[index],gameState.getAgentPosition(self.index))
+        
         if gameState.getAgentState(index).scaredTimer > 0:
-          distance = distance*999999
+          distance = distance*1000
+        if oppState.isPacman:
+          distance = distance*1000
         if distance < minDistance:
           minDistance = distance
-    features['closestEnemy'] = 1/minDistance
+    features['closestEnemy'] = float(1)/minDistance
     
 
     return features
 
   def getOffensiveWeights(self, gameState):
     # what weights? check other implementations for a rough idea
-    return {'stateScore': 80, 'numFoods': 8, 'sumDistanceToFood': -1, 'closestEnemy': -100000}
+    return {'stateScore': 80, 'numFoods': 8, 'sumDistanceToFood': -1, 'closestEnemy': -100}
 
     
   ###### 'DEFENCE' BEHAVIOUR CODE ######
@@ -400,12 +427,13 @@ class DummyAgent(CaptureAgent):
       homeX = homeX - (1+offset)
     else:
       homeX = homeX + offset
-    if self.red and position[0] >= homeX:
+    if self.red and position[0] > homeX:
       return False
-    elif not self.red and position[0] <= homeX:
+    elif not self.red and position[0] < homeX:
       return False
     else:
       return True
+
 
 
   def chooseDefensiveAction(self, gameState):
@@ -416,7 +444,7 @@ class DummyAgent(CaptureAgent):
       successor = self.getSuccessor(gameState,action)
       successorState = successor.getAgentState(self.index)
       successorPos = successorState.getPosition()
-      if not self.inHomeTerritory(gameState,successorPos,-1):
+      if not self.inHomeTerritory(gameState,successorPos,0):
         actions.remove(action)
     # get a list of values (call evaluate?) OR call evaluateDefensive
       # evaluate defensive features/weights
@@ -464,7 +492,7 @@ class DummyAgent(CaptureAgent):
     foodEatenByOpponent = []
     for x in range(gameState.getWalls().width):
       for y in range(gameState.getWalls().height):
-        if self.prevFoodState[x][y] == True and self.getFoodYouAreDefending(gameState)[x][y] == False and self.inHomeTerritory(gameState, (x,y), -1):
+        if self.prevFoodState[x][y] == True and self.getFoodYouAreDefending(gameState)[x][y] == False and self.inHomeTerritory(gameState, (x,y), 0):
           foodEatenByOpponent = foodEatenByOpponent + [(x,y)]
     self.prevFoodState = self.getFoodYouAreDefending(gameState)
     return foodEatenByOpponent
