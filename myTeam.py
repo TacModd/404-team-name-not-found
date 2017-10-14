@@ -144,7 +144,7 @@ class DummyAgent(CaptureAgent):
     else:
       return False
     if minTeamIndex == None:
-      return False
+      return self.index == min(self.teamIndices)
     elif(self.index) != minTeamIndex:
       return True
     else:
@@ -169,25 +169,39 @@ class DummyAgent(CaptureAgent):
 
   def nextBehaviourState(self,gameState):
     #defenceDestinationCandidate = self.opponentDetected(gameState)
-    self.updateOpponentPositions(gameState)
+    #self.updateOpponentPositions(gameState)
     self.updateDefenceDestination(gameState)
 
     if self.behaviourState == 'Guard':
       if not self.defenceDestination == None:
         self.behaviourState = 'Defence'
+        self.updateOpponentPositions(gameState)
       elif self.shouldIAttack(gameState):
          self.behaviourState = 'Offence'
+         self.updateOpponentPositions(gameState)
       else:
-        return
+        self.updateOpponentPositions(gameState)
+        if self.shouldIAttack(gameState):
+          self.behaviourState = 'Offence'
+        else:
+          return
+     
     elif self.behaviourState == 'Defence':
       if self.shouldIAttack(gameState):
-         self.behaviourState = 'Offence'
+        self.behaviourState = 'Offence'
+        self.updateOpponentPositions(gameState)
       elif self.defenceDestination == None:
         self.behaviourState = 'Guard'
+        self.updateOpponentPositions(gameState)
       else:
-        return
+        self.updateOpponentPositions(gameState)
+        if self.shouldIAttack(gameState):
+          self.behaviourState = 'Offence'
+        else:
+          return
 
     elif self.behaviourState == 'Offence':
+      self.updateOpponentPositions(gameState)
       if self.isDead(gameState):
         self.resetFoodCount()
         self.behaviourState = 'Guard'
@@ -200,6 +214,7 @@ class DummyAgent(CaptureAgent):
         return
 
     elif self.behaviourState == 'Flee':
+      self.updateOpponentPositions(gameState)
       #if self.middleReached(gameState, position):
       if self.inHomeTerritory(gameState, gameState.getAgentPosition(self.index),0) or self.isDead(gameState):
         self.resetFoodCount()
@@ -208,6 +223,7 @@ class DummyAgent(CaptureAgent):
         return
 
     else:
+      self.updateOpponentPositions(gameState)
       self.behaviourState = 'Guard'
     
   
@@ -676,4 +692,4 @@ class Bottom(DummyAgent):
       yCandidate = yCenter-i
       if not  gameState.hasWall(x,yCandidate):
         break
-self.center = (x,yCandidate)
+    self.center = (x,yCandidate)
