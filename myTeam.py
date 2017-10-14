@@ -130,6 +130,7 @@ class DummyAgent(CaptureAgent):
 
   def shouldIAttack(self,gameState):
     minDistance = 99999999
+    minTeamIndex = None
     if self.opponentIsDead(gameState):
       print 'blah'
       for opponentIndex in self.opponentIndices:
@@ -141,7 +142,9 @@ class DummyAgent(CaptureAgent):
             minTeamIndex = teamIndex
     else:
       return False
-    if(self.index) != minTeamIndex:
+    if minTeamIndex == None:
+      return False
+    elif(self.index) != minTeamIndex:
       return True
     else:
       return False
@@ -187,6 +190,8 @@ class DummyAgent(CaptureAgent):
       if self.isDead(gameState):
         self.resetFoodCount()
         self.behaviourState = 'Guard'
+      elif not self.defenceDestination == None and self.inHomeTerritory(gameState,gameState.getAgentPosition(self.index),0):
+        self.behaviourState = 'Defence'
       elif self.tooMuchFood():
         self.behaviourState = 'Flee'
         self.setFleeDestination(gameState)
@@ -300,6 +305,7 @@ class DummyAgent(CaptureAgent):
       maxAll = max(maxVal,maxAll)
       values.append(value)
     if minAll == maxAll:
+      print 'check'
       minDistance = 999999999
       foodList = self.getFood(gameState).asList()
       for food in foodList:
