@@ -169,7 +169,7 @@ class DummyAgent(CaptureAgent):
 
   def nextBehaviourState(self,gameState):
     #defenceDestinationCandidate = self.opponentDetected(gameState)
-    #self.updateOpponentPositions(gameState)
+    self.updateOpponentPositions(gameState)
     self.updateDefenceDestination(gameState)
 
     if self.behaviourState == 'Guard':
@@ -177,43 +177,29 @@ class DummyAgent(CaptureAgent):
         self.behaviourState = 'Defence'
       elif self.shouldIAttack(gameState):
          self.behaviourState = 'Offence'
-         self.updateOpponentPositions(gameState)
       else:
-        self.updateOpponentPositions(gameState)
-        if self.shouldIAttack(gameState):
-          self.behaviourState = 'Offence'
-        else:
-          return
+        return
     elif self.behaviourState == 'Defence':
       if self.shouldIAttack(gameState):
          self.behaviourState = 'Offence'
-         self.updateOpponentPositions(gameState)
       elif self.defenceDestination == None:
-        self.updateOpponentPositions(gameState)
         self.behaviourState = 'Guard'
       else:
-        self.updateOpponentPositions(gameState)
-        if self.shouldIAttack(gameState):
-          self.behaviourState = 'Offence'
-        else:
-          return
+        return
 
     elif self.behaviourState == 'Offence':
-      self.updateOpponentPositions(gameState)
       if self.isDead(gameState):
         self.resetFoodCount()
         self.behaviourState = 'Guard'
       elif not self.defenceDestination == None and self.inHomeTerritory(gameState,gameState.getAgentPosition(self.index),0):
         self.behaviourState = 'Defence'
-      elif self.tooMuchFood():
+      elif self.tooMuchFood() or self.nearestGhostDistance(gameState) <= 3:
         self.behaviourState = 'Flee'
-        self.setFleeDestination(gameState)
         return 
       else:
         return
 
     elif self.behaviourState == 'Flee':
-      self.updateOpponentPositions(gameState)
       #if self.middleReached(gameState, position):
       if self.inHomeTerritory(gameState, gameState.getAgentPosition(self.index),0) or self.isDead(gameState):
         self.resetFoodCount()
@@ -222,7 +208,6 @@ class DummyAgent(CaptureAgent):
         return
 
     else:
-      self.updateOpponentPositions(gameState)
       self.behaviourState = 'Guard'
     
   
@@ -691,4 +676,4 @@ class Bottom(DummyAgent):
       yCandidate = yCenter-i
       if not  gameState.hasWall(x,yCandidate):
         break
-    self.center = (x,yCandidate)
+self.center = (x,yCandidate)
