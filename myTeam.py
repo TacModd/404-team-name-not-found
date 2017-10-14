@@ -16,6 +16,8 @@ from captureAgents import CaptureAgent
 import random, time, util
 from game import Directions
 import game
+import util
+from util import Queue
 
 #################
 # Team creation #
@@ -191,9 +193,8 @@ class DummyAgent(CaptureAgent):
         self.behaviourState = 'Guard'
       elif not self.defenceDestination == None and self.inHomeTerritory(gameState,gameState.getAgentPosition(self.index),0):
         self.behaviourState = 'Defence'
-      elif self.tooMuchFood():
+      elif self.tooMuchFood() or self.nearestGhostDistance(gameState) <= 3:
         self.behaviourState = 'Flee'
-        self.setFleeDestination(gameState)
         return 
       else:
         return
@@ -318,6 +319,11 @@ class DummyAgent(CaptureAgent):
         if distance<minDistance:
           minDistance = distance
           minAction = action
+      successor = self.getSuccessor(gameState, minAction)
+      foodList = self.getFood(gameState).asList()
+      successorFoodList = self.getFood(successor).asList()
+      if len(successorFoodList) < len(foodList):
+        self.eatenFood += 1
       return minAction
     else:
     # choose action with best value
@@ -385,6 +391,22 @@ class DummyAgent(CaptureAgent):
       iterations -= 1
     # return values (to chooseOffensiveAction)
     return [self.evaluateOffensive(endState) for endState in endStates]
+
+  def nearestGhostDistance(self,gameState):
+    minDistance = 999999
+    opponentDict = self.getOpponentPositionsDict(gameState)
+    for index in self.opponentIndices:
+      if opponentDict[index] != None:
+        oppState = gameState.getAgentState(index)
+        distance = self.getMazeDistance(opponentDict[index],gameState.getAgentPosition(self.index))
+        
+        if gameState.getAgentState(index).scaredTimer > 0:
+          distance = distance*1000
+        if oppState.isPacman:
+          distance = distance*1000
+        if distance < minDistance:
+          minDistance = distance
+    return minDistance
   
   def evaluateOffensive(self, gameState):
     # same as base evaluate function really (see baselineTeam.py)
@@ -574,56 +596,37 @@ class DummyAgent(CaptureAgent):
 
   ###### 'FLEE' BEHAVIOUR CODE ######
 
-  def setFleeDestination(self,gameState):
-    x = gameState.getWalls().width/2
-    offset = 0
-    if self.red:
-      x = x - (1+offset)
-    else:
-      x = x + offset
-    minDistance = 9999999
-    yMax = gameState.getWalls().height
-    for y in xrange(1,yMax):
-      if not  gameState.hasWall(x,y):
-        distance = self.getMazeDistance(gameState.getAgentPosition(self.index),(x,y))
-        if distance < minDistance:
-          minDistance = distance
-          minY = y
-    self.fleeDestination = (x,minY)
-
   def chooseFleeAction(self, gameState):
     #
-    actions = gameState.getLegalActions(self.index)
-    
-    values = [self.evaluateFlee(gameState, a) for a in actions]
-    
-    maxValue = max(values)
-    bestActions = [a for a, v in zip(actions, values) if v == maxValue]
-
-    return random.choice(bestActions)
-
-  def evaluateFlee(self, gameState, action):
-    #
-    features = self.getFleeFeatures(gameState, action)
-    weights = self.getFleeWeights(gameState, action)
-    return features * weights
-
-  def getFleeFeatures(self, gameState, action):
-    # features are distancetocenter, nearbyghost?
-    features = util.Counter()
-    successor = self.getSuccessor(gameState, action)
-    successorState = successor.getAgentState(self.index)
-    successorPos = successorState.getPosition()
-    minDistance = 99999999
-    if self.getMazeDistance(successorPos,self.center) < minDistance:
-      #bestAction = action
-      minDistance = self.getMazeDistance(successorPos,self.fleeDestination)
-    features['distanceToCenter'] = minDistance
-    return features
-
-  def getFleeWeights(self, gameState, action):
-    #
-    return {'distanceToCenter': -1}
+    q = Queue()
+    q.push((gameState, []))
+    visited = []
+    i = 0
+    while not q.isEmpty():
+      #print i
+      i = i+1
+      state, route = q.pop()
+      if self.nearestGhostDistance(state) <= 1 and state != gameState:
+        print i,'check 1'
+        continue
+      elif state.getAgentPosition(self.index) in visited:
+        print i,'check 2'
+        continue
+      elif self.inHomeTerritory(state,state.getAgentPosition(self.index),0):
+        if len(route) == 0:
+          return Directions.STOP
+        else:
+          return route[0]
+      visited = visited + [state.getAgentPosition(self.index)]
+      actions = state.getLegalActions(self.index)
+      #print actions
+      rev = Directions.REVERSE[state.getAgentState(self.index).configuration.direction]
+      if rev in actions and len(actions) > 1 and i!=1:
+        actions.remove(rev)
+      for action in actions:
+        q.push((self.getSuccessor(state,action),route+[action]))
+    print 'check'
+    return random.choice(gameState.getLegalActions(self.index))
 
 #########################################################################33
 
