@@ -83,8 +83,10 @@ class DummyAgent(CaptureAgent):
     self.prevFoodState = self.getFoodYouAreDefending(gameState)
     self.opponentIndices = self.getOpponents(gameState)
     self.teamIndices = self.getTeam(gameState)
+
     self.teammateIndex = self.getTeam(gameState)[:]
     self.teammateIndex.remove(self.index)
+
     self.defenceDestination = None
     self.attackDestination = None
     self.opponentPositions = {}
@@ -97,9 +99,7 @@ class DummyAgent(CaptureAgent):
   def destinationReached(self,gameState,destination):
     if destination == None:
       return False
-    else:
-      return self.getMazeDistance(gameState.getAgentPosition(self.index),destination) == 0
-
+    return self.getMazeDistance(gameState.getAgentPosition(self.index),destination) == 0
 
   def updateDefenceDestination(self,gameState):
     if self.destinationReached(gameState, self.defenceDestination):
@@ -115,8 +115,52 @@ class DummyAgent(CaptureAgent):
         else: 
           return 
 
-  def killedOpponent(self, gameState,index):
+  def updateOpponentDetected(self,gameState):
+    opponentPositions = self.getOpponentPositionsList(gameState)
+    foodEatenByOpponent = self.foodEatenByOpponent(gameState)
+    #print opponentPositions,foodEatenByOpponent
+    if len(opponentPositions)<2 and len(foodEatenByOpponent)>0:
+      if len(opponentPositions) == 0:
+        opponentPositions = foodEatenByOpponent
+      else:
+        #print len(opponentPositions)
+        for opEatFood in foodEatenByOpponent:
+          for opponentPosition in opponentPositions:
+            if self.getMazeDistance(opEatFood,opponentPosition) > 1:
+              opponentPositions = opponentPositions + [opEatFood]
+    if len(opponentPositions) == 1:
+      #print self.index,self.closestTeammember(gameState, opponentPositions[0])[0]
+      if self.closestTeammember(gameState, opponentPositions[0])[0] == self.index:
+        self.opponentDetected = opponentPositions[0]
+        return
+      else:
+        self.opponentDetected = None
+        return
+    elif len(opponentPositions) > 1:
+      minDistance = 99999999
+      for position in opponentPositions:
+        index, distance = self.closestTeammember(gameState,position)
+        if distance < minDistance:
+            minDistance = distance
+            minPosition = position
+            minIndex = index
+      if minIndex == self.index:
+        self.opponentDetected = minPosition
+        return
+      else:
+        for position in opponentPositions:
+          if not position == minPosition:
+            self.opponentDetected =  position
+            return
+    else:
+      self.opponentDetected =  None
 
+  def updateOpponentPositions(self, gameState):
+    self.opponentPrevPositions = self.opponentPositions.copy()
+    self.opponentPositions = self.getOpponentPositionsDict(gameState)
+
+  def killedOpponent(self, gameState,index):
+    #dictionary?
     for opponentIndex in self.opponentIndices:
       if self.opponentPositions[opponentIndex] == gameState.getInitialAgentPosition(opponentIndex):
         return True
@@ -126,14 +170,15 @@ class DummyAgent(CaptureAgent):
     return False
     
   def opponentIsDead(self, gameState):
-    dead = False
     for teamIndex in self.teamIndices:
-      dead = (dead or self.killedOpponent(gameState,teamIndex))
-    return dead
+      if self.killedOpponent(gameState,teamIndex):
+        return True
+    return False
 
   def shouldIAttack(self,gameState):
     minDistance = 99999999
     minTeamIndex = None
+    #print self.opponentIsDead(gameState)
     if self.opponentIsDead(gameState):
       for opponentIndex in self.opponentIndices:
         opponentPosition = gameState.getAgentPosition(opponentIndex)
@@ -152,79 +197,74 @@ class DummyAgent(CaptureAgent):
       return False
 
   def isDead(self, gameState):
-    if gameState.getAgentPosition(self.index) == gameState.getInitialAgentPosition(self.index):
+
+    if self.getMazeDistance(gameState.getAgentPosition(self.index),gameState.getInitialAgentPosition(self.index)) <= 2:
       return True 
     return False
 
   def tooMuchFood(self):
-    if self.eatenFood > 2:
+    if self.eatenFood > 4:
       return True
     return False
 
   def resetFoodCount(self):
     self.eatenFood = 0
 
-  def updateOpponentPositions(self, gameState):
-    self.opponentPrevPositions = self.opponentPositions.copy()
-    self.opponentPositions = self.getOpponentPositionsDict(gameState)
+  
 
   def nextBehaviourState(self,gameState):
     #defenceDestinationCandidate = self.opponentDetected(gameState)
     #self.updateOpponentPositions(gameState)
-    self.opponentDetected = self.updateOpponentDetected(gameState)
+    self.updateOpponentPositions(gameState)
+    self.updateOpponentDetected(gameState)
     self.updateDefenceDestination(gameState)
-
+    #print self.index,self.opponentDetected
+    #Placed here instead
+    #print self.getMazeDistance(gameState.getAgentPosition(self.index),gameState.getInitialAgentPosition(self.index))
+    #print self.isDead(gameState)
     #print self.index, self.defenceDestination 
-
+    #print self.index,self.opponentDetected,self.defenceDestination
+    #print  self.index,self.opponentDetected
+    #print self.behaviourState
     if self.behaviourState == 'Guard':
       if not self.defenceDestination == None:
         self.behaviourState = 'Defence'
-        self.updateOpponentPositions(gameState)
+        #self.updateOpponentPositions(gameState)
       elif self.shouldIAttack(gameState):
          self.behaviourState = 'Offence'
-         self.updateOpponentPositions(gameState)
-      else:
-        self.updateOpponentPositions(gameState)
-        if self.shouldIAttack(gameState):
-          self.behaviourState = 'Offence'
-        else:
-          return
+         #self.updateOpponentPositions(gameState)
+        #self.updateOpponentPositions(gameState)
+      return
      
     elif self.behaviourState == 'Defence':
+      #print self.shouldIAttack(gameState)
       if self.shouldIAttack(gameState):
         self.behaviourState = 'Offence'
-        self.updateOpponentPositions(gameState)
+        #self.updateOpponentPositions(gameState)
       elif self.defenceDestination == None:
         self.behaviourState = 'Guard'
-        self.updateOpponentPositions(gameState)
-      else:
-        self.updateOpponentPositions(gameState)
-        if self.shouldIAttack(gameState):
-          self.behaviourState = 'Offence'
-        else:
-          return
+        #self.updateOpponentPositions(gameState)
+        #self.updateOpponentPositions(gameState)
+      return
 
     elif self.behaviourState == 'Offence':
-      self.updateOpponentPositions(gameState)
+      #self.updateOpponentPositions(gameState)
       if self.isDead(gameState):
         self.resetFoodCount()
         self.behaviourState = 'Guard'
       elif not self.defenceDestination == None and self.inHomeTerritory(gameState,gameState.getAgentPosition(self.index),0):
         self.behaviourState = 'Defence'
-      elif self.tooMuchFood() or self.nearestGhostDistance(gameState) <= 3:
+      elif self.tooMuchFood() or (self.nearestGhostDistance(gameState) <= 3 and not (self.inHomeTerritory(gameState,gameState.getAgentPosition(self.index),0))):
         self.behaviourState = 'Flee'
-        return 
-      else:
-        return
+      return
 
     elif self.behaviourState == 'Flee':
-      self.updateOpponentPositions(gameState)
+      #self.updateOpponentPositions(gameState)
       #if self.middleReached(gameState, position):
       if self.inHomeTerritory(gameState, gameState.getAgentPosition(self.index),0) or self.isDead(gameState):
         self.resetFoodCount()
         self.behaviourState = 'Guard'
-      else:
-        return
+      return
 
     else:
       self.updateOpponentPositions(gameState)
@@ -235,7 +275,6 @@ class DummyAgent(CaptureAgent):
     # check behaviourState value
 
     self.nextBehaviourState(gameState)
-    print self.behaviourState
     if self.behaviourState == 'Guard':
       return self.chooseGuardAction(gameState)
     elif self.behaviourState == 'Defence':
@@ -317,13 +356,13 @@ class DummyAgent(CaptureAgent):
     values = []
     for a in actions:
       successor = self.getSuccessor(gameState, a)
-      print a
+      #print a
       monValues = self.MonteCarloSearch(8, successor, 40)
       value = sum(monValues)
       values.append(value)
-    print max(values),min(values)
+    #print max(values),min(values)
     if not self.FoodInProximity(gameState):
-      print 'check1'
+      #print 'check1'
       minDistance = 999999999
       foodList = self.getFood(gameState).asList()
       for food in foodList:
@@ -348,7 +387,7 @@ class DummyAgent(CaptureAgent):
     # choose action with best value
       maxValue = max(values)
       bestActions = [a for a, v in zip(actions, values) if v == maxValue]
-      print 'bestActions:', bestActions
+      #print 'bestActions:', bestActions
 
       choice = random.choice(bestActions)
       successor = self.getSuccessor(gameState, choice)
@@ -361,14 +400,14 @@ class DummyAgent(CaptureAgent):
   def FoodInProximity(self,gameState):
     foodList = self.getFood(gameState).asList()
     if len(foodList) > 0:
-      print 'check2'
+      #print 'check2'
       minDistance = min([self.getMazeDistance(gameState.getAgentState(self.index).getPosition(), food)
                          for food in foodList])
-      if minDistance>15:
-        print 'check3'
+      if minDistance>8:
+        #print 'check3'
         return False
       else:
-        print 'holy duck'
+        #print 'holy duck'
         return True
     else:
       return False
@@ -424,7 +463,7 @@ class DummyAgent(CaptureAgent):
       if self.evaluateOffensive(endState) > maxval:
           maxval = self.evaluateOffensive(endState)
           pls = self.getOffensiveFeatures(endState)
-    print maxval, pls
+    #print maxval, pls
     return [self.evaluateOffensive(endState) for endState in endStates]
 
   def nearestGhostDistance(self,gameState):
@@ -503,7 +542,7 @@ class DummyAgent(CaptureAgent):
     if minDistance == 0:
       minDistance = 0.01
     if minDistance > 1000:
-      features['closestCapsuleDistance'] = 0.5
+      features['closestCapsuleDistance'] = 1
     else: 
       features['closestCapsuleDistance'] = float(1)/minDistance
 
@@ -514,7 +553,8 @@ class DummyAgent(CaptureAgent):
 
   def getOffensiveWeights(self, gameState):
     # what weights? check other implementations for a rough idea
-    return {'stateScore': 60, 'numFoods': 60, 'sumDistanceToFood': -5, 'closestEnemy': -400, 'teammateDistance': -30,'closestCapsuleDistance': 40}
+    #return {'stateScore': 60, 'numFoods': 60, 'sumDistanceToFood': -5, 'closestEnemy': -400, 'teammateDistance': -30,'closestCapsuleDistance': 40}
+    return {'stateScore': 60, 'numFoods': 60, 'sumDistanceToFood': -5, 'closestEnemy': -360, 'teammateDistance': -90,'closestCapsuleDistance': 80}
 
     
   ###### 'DEFENCE' BEHAVIOUR CODE ######
@@ -621,38 +661,7 @@ class DummyAgent(CaptureAgent):
     return minIndex,minDistance
 
 
-  def updateOpponentDetected(self,gameState):
-
-    opponentPositions = self.getOpponentPositionsList(gameState)
-    foodEatenByOpponent = self.foodEatenByOpponent(gameState)
-    if len(opponentPositions)<2 and len(foodEatenByOpponent)>0:
-      if len(opponentPositions) == 0:
-        opponentPositions = foodEatenByOpponent
-      else:
-        #print len(opponentPositions)
-        for opEatFood in foodEatenByOpponent:
-          for opponentPosition in opponentPositions:
-            if self.getMazeDistance(opEatFood,opponentPosition) > 1:
-              opponentPositions = opponentPositions + [opEatFood]
-    if len(opponentPositions) == 1:
-      for position in opponentPositions:
-        if self.closestTeammember(gameState, position)[0] == self.index:
-          return position
-    elif len(opponentPositions) > 1:
-      minDistance = 99999999
-      for position in opponentPositions:
-        index, distance = self.closestTeammember(gameState,position)
-        if distance < minDistance:
-            minDistance = distance
-            minPosition = position
-            minIndex = index
-      if minIndex == self.index:
-        return minPosition
-      else:
-        for position in opponentPositions:
-          if not position == minPosition:
-            return position
-    return None
+  
 
   ###### 'FLEE' BEHAVIOUR CODE ######
 
