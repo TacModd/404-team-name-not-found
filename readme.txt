@@ -21,7 +21,6 @@ If opponent is observed or it is detected that opponent is eating food, one of t
 If our agent is scared or the team have killed an opponent, the agent enters offence mode. 
 Uses a modified Monte Carlo Search that executes a search starting from the state reached with all legal actions, once ‘STOP’ and has been removed, and an average of scores for each ‘move tree’  is calculate for each move. The features contributing to the score are: food eaten on path, food in proximity, food distances in proximity, closest enemy distance, closest teammate distance, and closest capsule distance. The weighting of these features can be adjusted in getOffenciveWeigths().
 
-
 'Flee'
 If the agent is in 'Offence' and detects a nearby ghost, or it has been eating a set amount of food, it enters 'Flee'
 It will then do a breadth first search to a position in its home territory, and take the first action on the shortest path that does not contain an observable ghost. 
