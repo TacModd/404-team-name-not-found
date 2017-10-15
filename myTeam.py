@@ -225,8 +225,10 @@ class DummyAgent(CaptureAgent):
     #print self.index, self.defenceDestination 
     #print self.index,self.opponentDetected,self.defenceDestination
     #print  self.index,self.opponentDetected
-    #print self.behaviourState
-    if self.behaviourState == 'Guard':
+    print self.behaviourState, gameState.getAgentState(self.index).scaredTimer
+    if gameState.getAgentState(self.index).scaredTimer>10:
+      self.behaviourState = 'Offence'
+    elif self.behaviourState == 'Guard':
       if not self.defenceDestination == None:
         self.behaviourState = 'Defence'
         #self.updateOpponentPositions(gameState)
@@ -238,7 +240,9 @@ class DummyAgent(CaptureAgent):
      
     elif self.behaviourState == 'Defence':
       #print self.shouldIAttack(gameState)
-      if self.shouldIAttack(gameState):
+      if gameState.getAgentState(self.index).isPacman:
+        self.behaviourState = 'Flee'
+      elif self.shouldIAttack(gameState):
         self.behaviourState = 'Offence'
         #self.updateOpponentPositions(gameState)
       elif self.defenceDestination == None:
@@ -249,13 +253,13 @@ class DummyAgent(CaptureAgent):
 
     elif self.behaviourState == 'Offence':
       #self.updateOpponentPositions(gameState)
-      if self.isDead(gameState):
+      if self.tooMuchFood() or (self.nearestGhostDistance(gameState) <= 3 and gameState.getAgentState(self.index).isPacman):
+        self.behaviourState = 'Flee'
+      elif not self.defenceDestination == None:# and self.inHomeTerritory(gameState,gameState.getAgentPosition(self.index),0):
+        self.behaviourState = 'Defence'
+      elif self.isDead(gameState):
         self.resetFoodCount()
         self.behaviourState = 'Guard'
-      elif not self.defenceDestination == None and self.inHomeTerritory(gameState,gameState.getAgentPosition(self.index),0):
-        self.behaviourState = 'Defence'
-      elif self.tooMuchFood() or (self.nearestGhostDistance(gameState) <= 3 and not (self.inHomeTerritory(gameState,gameState.getAgentPosition(self.index),0))):
-        self.behaviourState = 'Flee'
       return
 
     elif self.behaviourState == 'Flee':
@@ -581,7 +585,7 @@ class DummyAgent(CaptureAgent):
       successor = self.getSuccessor(gameState,action)
       successorState = successor.getAgentState(self.index)
       successorPos = successorState.getPosition()
-      if not self.inHomeTerritory(gameState,successorPos,0):
+      if not self.inHomeTerritory(gameState,successorPos,0) and not gameState.getAgentState(self.index).isPacman:
         actions.remove(action)
     # get a list of values (call evaluate?) OR call evaluateDefensive
       # evaluate defensive features/weights
@@ -716,11 +720,13 @@ class Top(DummyAgent):
     yCenter = int(round(yMax/4*3))
     for i in xrange(0,yMax):
       yCandidate = yCenter+i
-      if not  gameState.hasWall(x,yCandidate):
-        break
-      yCandidate = yCenter-i
-      if not  gameState.hasWall(x,yCandidate):
-        break
+      if yCandidate <= yMax:
+        if not  gameState.hasWall(x,yCandidate):
+          break
+      if yCandidate >=0:
+        yCandidate = yCenter-i
+        if not  gameState.hasWall(x,yCandidate):
+          break
     self.center = (x,yCandidate)
 
   
@@ -740,9 +746,11 @@ class Bottom(DummyAgent):
     yCenter = int(round(yMax/4))
     for i in xrange(0,yMax):
       yCandidate = yCenter+i
-      if not  gameState.hasWall(x,yCandidate):
-        break
-      yCandidate = yCenter-i
-      if not  gameState.hasWall(x,yCandidate):
-        break
+      if yCandidate <= yMax:
+        if not  gameState.hasWall(x,yCandidate):
+          break
+      if yCandidate >=0:
+        yCandidate = yCenter-i
+        if not  gameState.hasWall(x,yCandidate):
+          break
     self.center = (x,yCandidate)
