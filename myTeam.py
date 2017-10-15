@@ -209,7 +209,7 @@ class DummyAgent(CaptureAgent):
     return False
 
   def tooMuchFood(self):
-    if self.eatenFood > 4:
+    if self.eatenFood > 3:
       return True
     return False
 
@@ -488,10 +488,10 @@ class DummyAgent(CaptureAgent):
           minDistance = distance
     if minDistance == 0:
       minDistance = 0.01
-    if minDistance < 100:
-      features['closestEnemy'] = float(1)/(minDistance**0.5)
+    if minDistance < 6:
+      features['closestEnemy'] = 5 - minDistance #float(1)/(5-minDistance**0.5)
     else:
-      features['closestEnemy'] = float(1)/(5**0.5)
+      features['closestEnemy'] = 0 #float(1)/(5**0.5)
 
     distance = self.getMazeDistance(gameState.getAgentPosition(self.teammateIndex[0]),gameState.getAgentPosition(self.index))
     if distance > 0:
@@ -511,12 +511,19 @@ class DummyAgent(CaptureAgent):
       features['closestCapsuleDistance'] = 1
     else: 
       features['closestCapsuleDistance'] = float(1)/minDistance
+
+    distance = self.getMazeDistance(gameState.getAgentPosition(self.teammateIndex[0]),gameState.getAgentPosition(self.index))
+    if distance > 0:
+      features['teammateDistance'] = float(1)/distance
+    else:
+      features['teammateDistance'] = 5
+
     return features
 
   def getOffensiveWeights(self, gameState):
     # what weights? check other implementations for a rough idea
     #return {'stateScore': 60, 'numFoods': 60, 'sumDistanceToFood': -5, 'closestEnemy': -400, 'teammateDistance': -30,'closestCapsuleDistance': 40}
-    return {'stateScore': 60, 'numFoods': 60, 'sumDistanceToFood': -5, 'closestEnemy': -360, 'teammateDistance': -90,'closestCapsuleDistance': 80}
+    return {'stateScore': 60, 'numFoods': 60, 'sumDistanceToFood': -5, 'closestEnemy': -200, 'teammateDistance': -90,'closestCapsuleDistance': 80}
  
   ###### 'DEFENCE' BEHAVIOUR CODE ######
 
@@ -634,10 +641,10 @@ class Top(DummyAgent):
     yCenter = int(round(yMax/4*3))
     for i in xrange(0,yMax):
       yCandidate = yCenter+i
-      if yCandidate <= yMax:
-        if not  gameState.hasWall(x,yCandidate):
+      if yCandidate <= yMax and yCandidate > 0:
+        if not gameState.hasWall(x,yCandidate):
           break
-      if yCandidate >=0:
+      if yCandidate <= yMax and yCandidate > 0:
         yCandidate = yCenter-i
         if not  gameState.hasWall(x,yCandidate):
           break
@@ -658,10 +665,10 @@ class Bottom(DummyAgent):
     yCenter = int(round(yMax/4))
     for i in xrange(0,yMax):
       yCandidate = yCenter+i
-      if yCandidate <= yMax:
+      if yCandidate <= yMax and yCandidate > 0:
         if not  gameState.hasWall(x,yCandidate):
           break
-      if yCandidate >=0:
+      if yCandidate <= yMax and yCandidate > 0:
         yCandidate = yCenter-i
         if not  gameState.hasWall(x,yCandidate):
           break
