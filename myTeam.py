@@ -95,6 +95,22 @@ class DummyAgent(CaptureAgent):
     for opponentIndex in self.opponentIndices:
       self.opponentPositions[opponentIndex] = None
       self.opponentPrevPositions[opponentIndex] = None
+    self.printAdjacent(gameState)
+    exit()
+
+  def printAdjacent(self,gameState):
+     xMax = gameState.getWalls().width
+     yMax = gameState.getWalls().height
+     for x in xrange(1,xMax):
+      for y in xrange(1,yMax):
+        if not gameState.hasWall(x,y):
+          for i in xrange(-1,2,1):
+            for j in xrange(-1,2,1):
+              if abs(i+j)==1:
+                if not gameState.hasWall(x+i,y+j):
+                  print '(Adjacent node-x'+str(x)+'-y'+str(y)+' node-x'+str(x+i)+'-y'+str(y+j)+')'
+
+
   
   def destinationReached(self,gameState,destination):
     if destination == None:
