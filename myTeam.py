@@ -95,12 +95,39 @@ class DummyAgent(CaptureAgent):
     for opponentIndex in self.opponentIndices:
       self.opponentPositions[opponentIndex] = None
       self.opponentPrevPositions[opponentIndex] = None
-    #self.printStart(gameState)
-    self.printFood(gameState)
-    self.printCapsules(gameState)
+    # self.printStart(gameState)
+    # self.printFood(gameState)
+    # self.printCapsules(gameState)
     # self.printNodes(gameState)
     # self.printAdjacent(gameState)
+    # self.printNotFood(gameState)
+    # self.printGoalAt(gameState)
+    self.printTimeAdjacent()
     exit()
+
+  def printGoalAt(self,gameState):
+    centerX = gameState.getWalls().width/2
+    if self.red:
+      centerX = centerX - 1
+    string = '(or (at '
+    xMax = gameState.getWalls().width
+    yMax = gameState.getWalls().height
+    for x in xrange(1,xMax):
+      for y in xrange(1,yMax):
+        if not gameState.hasWall(x,y) and x == centerX:
+          string = string+self.positionString(x,y)+')'
+          print string
+          string = '(not (at '
+    print ')))))'
+
+  def printNotFood(self,gameState):
+    string = '(and (not (foodAt '
+    foods = self.getFood(gameState).asList()
+    for x,y in foods:
+      string = string + self.positionString(x,y)+'))'
+      print string
+      string = '(not (foodAt '
+
 
   def printStart(self,gameState):
     x,y = gameState.getInitialAgentPosition(self.index)
@@ -142,7 +169,31 @@ class DummyAgent(CaptureAgent):
   def positionString(self,x,y):
     return 'node-x'+str(x)+'-y'+str(y)
 
+  def printTimesandNodes(self,gameState):
+    string = '(:objects  '
+    xMax = gameState.getWalls().width
+    yMax = gameState.getWalls().height
+    for x in xrange(1,xMax):
+      for y in xrange(1,yMax):
+        if not gameState.hasWall(x,y):
+          string = string+self.positionString(x,y)+' '
+    for t in xrange(0,41):
+      string = string+self.timerString(t)+' '
+    string = string+')'
+    print string
+
+  def timerString(self,t):
+    return 't'+str(t)
+
+  def printTimeAdjacent(self):
+     for t in xrange(-1,40):
+        if(t==-1):
+          print '(connected '+self.timerString(t+1)+' '+self.timerString(t+1)+')'
+        else:
+          print '(connected '+self.timerString(t+1)+' '+self.timerString(t)+')'
   
+  
+        
   def destinationReached(self,gameState,destination):
     if destination == None:
       return False
