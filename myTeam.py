@@ -512,11 +512,11 @@ class DummyAgent(CaptureAgent):
     else: 
       features['closestCapsuleDistance'] = float(1)/minDistance
 
-    distance = self.getMazeDistance(gameState.getAgentPosition(self.teammateIndex[0]),gameState.getAgentPosition(self.index))
-    if distance > 0:
-      features['teammateDistance'] = float(1)/distance
-    else:
-      features['teammateDistance'] = 5
+    # distance = self.getMazeDistance(gameState.getAgentPosition(self.teammateIndex[0]),gameState.getAgentPosition(self.index))
+    # if distance > 0:
+    #   features['teammateDistance'] = float(1)/distance
+    # else:
+    #   features['teammateDistance'] = 5
 
     return features
 
