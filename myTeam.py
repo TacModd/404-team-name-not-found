@@ -577,12 +577,12 @@ class DummyAgent(CaptureAgent):
     minDistance = 99999999
     if (not self.defenceDestination == None) and self.getMazeDistance(successorPos,self.defenceDestination) < minDistance:
       minDistance = self.getMazeDistance(successorPos,self.defenceDestination)
-    features['distanceToCenter'] = minDistance
+    features['distanceToDefenceDestination'] = minDistance
     return features
 
   def getDefensiveWeights(self, gameState, action):
     #
-    return {'distanceToCenter': -1}
+    return {'distanceToDefenceDestinaton': -1}
 
   def foodEatenByOpponent(self, gameState):
     foodEatenByOpponent = []
