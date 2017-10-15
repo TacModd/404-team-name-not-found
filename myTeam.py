@@ -95,8 +95,37 @@ class DummyAgent(CaptureAgent):
     for opponentIndex in self.opponentIndices:
       self.opponentPositions[opponentIndex] = None
       self.opponentPrevPositions[opponentIndex] = None
-    self.printAdjacent(gameState)
+    #self.printStart(gameState)
+    self.printFood(gameState)
+    self.printCapsules(gameState)
+    # self.printNodes(gameState)
+    # self.printAdjacent(gameState)
     exit()
+
+  def printStart(self,gameState):
+    x,y = gameState.getInitialAgentPosition(self.index)
+    print '(at '+self.positionString(x,y)+')'
+
+  def printCapsules(self,gameState):
+    caps = self.getCapsules(gameState)
+    for x,y in caps:
+      print '(capsuleAt '+self.positionString(x,y)+')'
+
+  def printFood(self,gameState):
+    foods = self.getFood(gameState).asList()
+    for x,y in foods:
+      print '(foodAt '+self.positionString(x,y)+')'
+
+
+  def printNodes(self,gameState):
+    string = '(:objects  '
+    xMax = gameState.getWalls().width
+    yMax = gameState.getWalls().height
+    for x in xrange(1,xMax):
+      for y in xrange(1,yMax):
+        if not gameState.hasWall(x,y):
+          string = string+self.positionString(x,y)+' '
+    print string
 
   def printAdjacent(self,gameState):
      xMax = gameState.getWalls().width
@@ -108,8 +137,10 @@ class DummyAgent(CaptureAgent):
             for j in xrange(-1,2,1):
               if abs(i+j)==1:
                 if not gameState.hasWall(x+i,y+j):
-                  print '(Adjacent node-x'+str(x)+'-y'+str(y)+' node-x'+str(x+i)+'-y'+str(y+j)+')'
+                  print '(connected '+self.positionString(x,y)+' '+self.positionString(x+i,y+j)+')'
 
+  def positionString(self,x,y):
+    return 'node-x'+str(x)+'-y'+str(y)
 
   
   def destinationReached(self,gameState,destination):
