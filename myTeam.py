@@ -645,8 +645,8 @@ class Top(DummyAgent):
       if yCandidate <= yMax and yCandidate > 0:
         if not gameState.hasWall(x,yCandidate):
           break
+      yCandidate = yCenter-i
       if yCandidate <= yMax and yCandidate > 0:
-        yCandidate = yCenter-i
         if not  gameState.hasWall(x,yCandidate):
           break
     self.center = (x,yCandidate)
@@ -669,8 +669,8 @@ class Bottom(DummyAgent):
       if yCandidate <= yMax and yCandidate > 0:
         if not  gameState.hasWall(x,yCandidate):
           break
+      yCandidate = yCenter-i
       if yCandidate <= yMax and yCandidate > 0:
-        yCandidate = yCenter-i
         if not  gameState.hasWall(x,yCandidate):
           break
     self.center = (x,yCandidate)
