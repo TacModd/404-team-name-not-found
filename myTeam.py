@@ -121,7 +121,12 @@ class DummyAgent(CaptureAgent):
   ###############################
    
   def chooseAction(self, gameState):
+
+    self.updateOpponentPositions(gameState)
+    self.updateOpponentDetected(gameState)
+    self.updateDefenceDestination(gameState)
     self.updateBehaviourState(gameState)
+
     if self.behaviourState == 'Guard':
       return self.chooseGuardAction(gameState)
     elif self.behaviourState == 'Defence':
@@ -193,10 +198,6 @@ class DummyAgent(CaptureAgent):
     self.opponentPositions = self.getOpponentPositionsDict(gameState)
 
   def updateBehaviourState(self,gameState):
-    self.updateOpponentPositions(gameState)
-    self.updateOpponentDetected(gameState)
-    self.updateDefenceDestination(gameState)
-   
     if gameState.getAgentState(self.index).scaredTimer>10:
       self.behaviourState = 'Offence'
 
@@ -333,13 +334,13 @@ class DummyAgent(CaptureAgent):
 
   def foodInProximity(self,gameState):
     foodList = self.getFood(gameState).asList()
-    if len(foodList) > 0:
-      minDistance = min([self.getMazeDistance(gameState.getAgentState(self.index).getPosition(), food)
-                         for food in foodList])
-      if minDistance>8:
-        return False
-      return True
-    return False
+    if len(foodList) <= 0:
+      return False
+    minDistance = min([self.getMazeDistance(gameState.getAgentState(self.index).getPosition(), food) for food in foodList])
+    if minDistance>8:
+      return False
+    return True
+    
 
   def shouldIAttack(self,gameState):
     minDistance = 99999999
@@ -388,7 +389,7 @@ class DummyAgent(CaptureAgent):
   
   def chooseGuardAction(self, gameState):
     # use greedyBFS to get to middle
-      # one goes top, one goes bottom (see 'Top' and 'Bottom' classes) 
+    # one goes top, one goes bottom (see 'Top' and 'Bottom' classes) 
     actions = gameState.getLegalActions(self.index)
     values = [self.evaluateGuard(gameState, a) for a in actions]
     maxValue = max(values)
@@ -402,15 +403,9 @@ class DummyAgent(CaptureAgent):
     return features * weights
 
   def getGuardFeatures(self, gameState, action):
-    # distanceToCenter
     features = util.Counter()
-    successor = self.getSuccessor(gameState, action)
-    successorState = successor.getAgentState(self.index)
-    successorPos = successorState.getPosition()
-    minDistance = 99999999
-    if self.getMazeDistance(successorPos,self.center) < minDistance:
-      minDistance = self.getMazeDistance(successorPos,self.center)
-    features['distanceToCenter'] = minDistance
+    successorPosition = self.getSuccessor(gameState, action).getAgentState(self.index).getPosition()
+    features['distanceToCenter'] = self.getMazeDistance(successorPosition, self.center)
     return features
 
   def getGuardWeights(self, gameState, action):
@@ -556,14 +551,12 @@ class DummyAgent(CaptureAgent):
     return features
 
   def getOffensiveWeights(self, gameState):
-    # what weights? check other implementations for a rough idea
     return {'stateScore': OffensiveWeights.STATE_SCORE, 
             'numFoods': OffensiveWeights.NUM_FOODS, 
             'sumDistanceToFood': OffensiveWeights.SUM_DIST_FOOD, 
             'closestEnemy': OffensiveWeights.CLOSEST_ENEMY, 
             'teammateDistance': OffensiveWeights.TEAMMATE_DIST,
             'closestCapsuleDistance': OffensiveWeights.CAPSULE_DIST}
-    #return {'stateScore': 60, 'numFoods': 60, 'sumDistanceToFood': -5, 'closestEnemy': -10, 'teammateDistance': -90,'closestCapsuleDistance': 80}
  
   ############################
   # 'DEFENCE' BEHAVIOUR CODE #
@@ -575,10 +568,8 @@ class DummyAgent(CaptureAgent):
     actions.remove(Directions.STOP)
 
     for action in actions:
-      successor = self.getSuccessor(gameState,action)
-      successorState = successor.getAgentState(self.index)
-      successorPos = successorState.getPosition()
-      if not self.inHomeTerritory(gameState,successorPos,0) and not gameState.getAgentState(self.index).isPacman:
+      successorPosition = self.getSuccessor(gameState,action).getAgentState(self.index).getPosition()
+      if not self.inHomeTerritory(gameState,successorPosition,0) and not gameState.getAgentState(self.index).isPacman:
         actions.remove(action)
 
     values = [self.evaluateDefensive(gameState, a) for a in actions]
@@ -596,14 +587,11 @@ class DummyAgent(CaptureAgent):
     return features * weights
 
   def getDefensiveFeatures(self, gameState, action):
-    # distanceToCenter
     features = util.Counter()
-    successor = self.getSuccessor(gameState, action)
-    successorState = successor.getAgentState(self.index)
-    successorPos = successorState.getPosition()
+    successorPosition = self.getSuccessor(gameState, action).getAgentState(self.index).getPosition()
     minDistance = 99999999
-    if (not self.defenceDestination == None) and self.getMazeDistance(successorPos,self.defenceDestination) < minDistance:
-      minDistance = self.getMazeDistance(successorPos,self.defenceDestination)
+    if self.defenceDestination != None and self.getMazeDistance(successorPosition,self.defenceDestination) < minDistance:
+      minDistance = self.getMazeDistance(successorPosition, self.defenceDestination)
     features['distanceToCenter'] = minDistance
     return features
 
@@ -645,7 +633,6 @@ class DummyAgent(CaptureAgent):
 #########################################################################
 
 class Top(DummyAgent):
-# go top somehow
   def setCenter(self,gameState):
     #get center of map and maxHeight
 
@@ -670,7 +657,7 @@ class Top(DummyAgent):
     self.center = (x,yCandidate)
 
 class Bottom(DummyAgent):
-# go bottom somehow
+
   def setCenter(self,gameState):
     #get center of map and maxHeight
     x = gameState.getWalls().width/2
