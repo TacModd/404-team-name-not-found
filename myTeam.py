@@ -162,6 +162,7 @@ class DummyAgent(CaptureAgent):
           for opponentPosition in opponentPositions:
             if self.getMazeDistance(opEatFood,opponentPosition) > 1:
               opponentPositions = opponentPositions + [opEatFood]
+
     if len(opponentPositions) == 1:
       if self.closestTeammember(gameState, opponentPositions[0])[0] == self.index:
         self.opponentDetected = opponentPositions[0]
@@ -169,21 +170,20 @@ class DummyAgent(CaptureAgent):
       else:
         self.opponentDetected = None
         return
+
     elif len(opponentPositions) > 1:
       minDistance = 99999999
       for position in opponentPositions:
         index, distance = self.closestTeammember(gameState,position)
         if distance < minDistance:
-            minDistance = distance
-            minPosition = position
-            minIndex = index
+            minDistance, minPosition, minIndex = distance, position, index
       if minIndex == self.index:
         self.opponentDetected = minPosition
         return
       else:
         for position in opponentPositions:
           if not position == minPosition:
-            self.opponentDetected =  position
+            self.opponentDetected = position
             return
     else:
       self.opponentDetected =  None
@@ -274,8 +274,7 @@ class DummyAgent(CaptureAgent):
     for index in self.teamIndices:
       distance = self.getMazeDistance(gameState.getAgentPosition(index), position)
       if distance < minDistance:
-        minDistance = distance
-        minIndex = index
+        minDistance, minIndex = distance, index
     return minIndex,minDistance
 
   #returns the distance the the closest ghost. 
@@ -302,7 +301,6 @@ class DummyAgent(CaptureAgent):
           foodEatenByOpponent = foodEatenByOpponent + [(x,y)]
     self.prevFoodState = self.getFoodYouAreDefending(gameState)
     return foodEatenByOpponent
-
 
  ###########################################
  # CHECK IF A SITUATION HAS OCCURED OR NOT #
@@ -352,8 +350,7 @@ class DummyAgent(CaptureAgent):
         if opponentPosition != None:
           teamIndex,distance = self.closestTeammember(gameState, opponentPosition)
           if distance < minDistance:
-            minDistance = distance
-            minTeamIndex = teamIndex
+            minDistance, minTeamIndex = distance, teamIndex
     else:
       return False
 
